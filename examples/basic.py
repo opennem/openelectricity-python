@@ -35,13 +35,23 @@ def sync_example():
         # Print results
         print("\nSynchronous Results:")
         print(f"Data points: {len(response.data)}")
-        for point in response.data:
-            print(f"\nInterval: {point.interval}")
-            print(f"Start: {point.start}")
-            print(f"End: {point.end}")
-            print("Data:")
-            for key, value in point.data.items():
-                print(f"  {key}: {value}")
+
+        # Print each time series
+        for series in response.data:
+            print(f"\nMetric: {series.metric}")
+            print(f"Unit: {series.unit}")
+            print(f"Interval: {series.interval}")
+            print(f"Start: {series.start}")
+            print(f"End: {series.end}")
+            print("Results:")
+
+            # Print each result group
+            for result in series.results:
+                print(f"\n  {result.name}:")
+                print(f"  Fuel Tech Group: {result.columns.fueltech_group}")
+                print("  Data Points:")
+                for point in result.data:
+                    print(f"    {point.timestamp}: {point.value:.2f} {series.unit}")
 
 
 async def async_example():
@@ -65,13 +75,23 @@ async def async_example():
         # Print results
         print("\nAsynchronous Results:")
         print(f"Data points: {len(response.data)}")
-        for point in response.data:
-            print(f"\nInterval: {point.interval}")
-            print(f"Start: {point.start}")
-            print(f"End: {point.end}")
-            print("Data:")
-            for key, value in point.data.items():
-                print(f"  {key}: {value}")
+
+        # Print each time series
+        for series in response.data:
+            print(f"\nMetric: {series.metric}")
+            print(f"Unit: {series.unit}")
+            print(f"Interval: {series.interval}")
+            print(f"Start: {series.start}")
+            print(f"End: {series.end}")
+            print("Results:")
+
+            # Print each result group
+            for result in series.results:
+                print(f"\n  {result.name}:")
+                print(f"  Fuel Tech Group: {result.columns.fueltech_group}")
+                print("  Data Points:")
+                for point in result.data:
+                    print(f"    {point.timestamp}: {point.value:.2f} {series.unit}")
 
 
 def main():

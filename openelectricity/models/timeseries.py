@@ -5,7 +5,8 @@ This module contains models for time series data responses.
 """
 
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Any
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -32,7 +33,9 @@ class TimeSeriesDataPoint(RootModel):
 class TimeSeriesColumns(BaseModel):
     """Column metadata for time series results."""
 
-    unit_code: str
+    unit_code: str | None = None
+    fueltech_group: str | None = None
+    network_region: str | None = None
 
 
 class TimeSeriesResult(BaseModel):
@@ -63,3 +66,107 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
     """Response model for time series data."""
 
     data: Sequence[NetworkTimeSeries]
+
+    def _create_network_date(self, timestamp: datetime, timezone_offset: str) -> datetime:
+        """
+        Create a datetime with the correct network timezone.
+
+        Args:
+            timestamp: The UTC timestamp
+            timezone_offset: The timezone offset string (e.g., "+10:00")
+
+        Returns:
+            A datetime adjusted to the network timezone
+        """
+        if not timezone_offset:
+            return timestamp
+
+        # Parse the timezone offset
+        sign = 1 if timezone_offset.startswith("+") else -1
+        hours, minutes = map(int, timezone_offset[1:].split(":"))
+        offset_minutes = (hours * 60 + minutes) * sign
+
+        # Adjust the timestamp
+        return timestamp.replace(tzinfo=None) + timedelta(minutes=offset_minutes)
+
+    def to_records(self) -> list[dict[str, Any]]:
+        """
+        Convert time series data into a list of records suitable for data analysis.
+
+        Returns:
+            List of dictionaries, each representing a row in the resulting table
+        """
+        if not self.data:
+            return []
+
+        records: list[dict[str, Any]] = []
+
+        for series in self.data:
+            # Process each result group
+            for result in series.results:
+                # Get grouping information
+                groupings = {k: v for k, v in result.columns.__dict__.items() if v is not None and k != "unit_code"}
+
+                # Process each data point
+                for point in result.data:
+                    # Create or update record
+                    record_key = (point.timestamp.isoformat(), *sorted(groupings.items()))
+                    existing_record = next(
+                        (r for r in records if (r["interval"].isoformat(), *sorted((k, r[k]) for k in groupings)) == record_key),
+                        None,
+                    )
+
+                    if existing_record:
+                        # Update existing record with this metric
+                        existing_record[series.metric] = point.value
+                    else:
+                        # Create new record
+                        record = {
+                            "interval": self._create_network_date(point.timestamp, series.network_timezone_offset),
+                            **groupings,
+                            series.metric: point.value,
+                        }
+                        records.append(record)
+
+        return records
+
+    def get_metric_units(self) -> dict[str, str]:
+        """
+        Get a mapping of metrics to their units.
+
+        Returns:
+            Dictionary mapping metric names to their units
+        """
+        return {series.metric: series.unit for series in self.data}
+
+    def to_polars(self) -> "pl.DataFrame":
+        """
+        Convert time series data into a Polars DataFrame.
+
+        Returns:
+            A Polars DataFrame containing the time series data
+        """
+        try:
+            import polars as pl
+        except ImportError:
+            raise ImportError(
+                "Polars is required for DataFrame conversion. " "Install it with: uv add 'openelectricity[analysis]'"
+            ) from None
+
+        return pl.DataFrame(self.to_records())
+
+    def to_pandas(self) -> "pd.DataFrame":
+        """
+        Convert time series data into a Pandas DataFrame.
+
+        Returns:
+            A Pandas DataFrame containing the time series data
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError(
+                "Pandas is required for DataFrame conversion. " "Install it with: uv add 'openelectricity[analysis]'"
+            ) from None
+
+        return pd.DataFrame(self.to_records())

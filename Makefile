@@ -81,9 +81,12 @@ tag:
 		git push -u origin "$(CURRENT_BRANCH)"; \
 	fi
 
+.PHONY publish
+publish:
+	uvx hatch publish
 
 .PHONY: release-pre
-release-pre: format lint
+release-pre: format lint test
 
 .PHONY: release
 release: release-pre version tag
