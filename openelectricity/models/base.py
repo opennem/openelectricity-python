@@ -4,10 +4,11 @@ Base models for the OpenElectricity API.
 This module contains the base models used across the API.
 """
 
+from collections.abc import Sequence
 from datetime import datetime
-from typing import TypeVar, Generic, Any, Sequence
-from pydantic import BaseModel, Field
+from typing import Generic, TypeVar
 
+from pydantic import BaseModel, Field
 
 T = TypeVar("T")
 

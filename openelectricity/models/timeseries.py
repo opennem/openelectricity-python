@@ -7,20 +7,26 @@ This module contains models for time series data responses.
 from collections.abc import Sequence
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 from openelectricity.models.base import APIResponse
 from openelectricity.types import DataInterval, NetworkCode
 
 
-class TimeSeriesDataPoint(BaseModel):
+class TimeSeriesDataPoint(RootModel):
     """Individual data point in a time series."""
 
-    timestamp: datetime = Field(..., alias="0")
-    value: float = Field(..., alias="1")
+    root: tuple[datetime, float]
 
-    class Config:
-        populate_by_name = True
+    @property
+    def timestamp(self) -> datetime:
+        """Get the timestamp from the data point."""
+        return self.root[0]
+
+    @property
+    def value(self) -> float:
+        """Get the value from the data point."""
+        return self.root[1]
 
 
 class TimeSeriesColumns(BaseModel):
