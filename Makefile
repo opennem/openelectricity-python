@@ -66,6 +66,10 @@ version:
 	git add $(projectname)/__init__.py; \
 	git commit -m "Bump version to $$NEW_VERSION"
 
+.PHONY: build
+build:
+	uv build
+
 .PHONY: tag
 tag:
 	$(eval CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
@@ -79,8 +83,7 @@ tag:
 	fi
 
 .PHONY: publish
-publish:
-	uv build
+publish: release build
 	uv publish
 
 .PHONY: release-pre
