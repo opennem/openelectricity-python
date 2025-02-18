@@ -37,8 +37,7 @@ check:
 
 .PHONY: build
 build:
-	pip install wheel
-	python setup.py sdist bdist_wheel
+	$(hatch) build
 
 
 .PHONY: version
@@ -48,42 +47,41 @@ version:
 		exit 1; \
 	fi
 	# if the branch is main then bump needs to be either major minor patch or release
+	@current_branch=$$(git rev-parse --abbrev-ref HEAD); \
 	if [ "$$current_branch" = "main" ]; then \
-		if [ "$$BUMP" != "major" ] && [ "$$BUMP" != "minor" ] && [ "$$BUMP" != "patch" ] && [ "$$BUMP" != "release" ] && [ "$$BUMP" != "rc" ]; then \
-			echo "Error: Cannot bump on master branch unless it is major, minor, patch or release"; \
+		if [ "$(BUMP)" != "major" ] && [ "$(BUMP)" != "minor" ] && [ "$(BUMP)" != "patch" ] && [ "$(BUMP)" != "release" ] && [ "$(BUMP)" != "rc" ]; then \
+			echo "Error: Cannot bump on main branch unless it is major, minor, patch or release"; \
 			exit 1; \
 		fi \
 	fi; \
-
-	# if the current branch is develop then the bump type must be dev
 	if [ "$$current_branch" = "develop" ]; then \
-		if [ "$$BUMP" != "dev" ]; then \
+		if [ "$(BUMP)" != "dev" ]; then \
 			echo "Error: Cannot bump on develop branch unless it is dev"; \
 			exit 1; \
 		fi \
 	fi; \
-
-	$(hatch) version $(BUMP)
-	@NEW_VERSION=$$(sed -n 's/__version__ = "\([^"]*\)".*/\1/p' opennem/__init__.py); \
+	$(hatch) version $(BUMP); \
+	NEW_VERSION=$$(sed -n 's/__version__ = "\([^"]*\)".*/\1/p' $(projectname)/__init__.py); \
 	echo "New version: $$NEW_VERSION"; \
-	git add opennem/__init__.py; \
+	git add $(projectname)/__init__.py; \
 	git commit -m "Bump version to $$NEW_VERSION"
 
 .PHONY: tag
 tag:
 	$(eval CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
-	$(eval NEW_VERSION := $(shell uvx hatch version))
-	@if [ "$(CURRENT_BRANCH)" = "master" ]; then \
-		git tag "$(NEW_VERSION)"; \
-		echo "Pushing $(NEW_VERSION)"; \
-		git push origin "$(NEW_VERSION)" "$(CURRENT_BRANCH)"; \
+	$(eval NEW_VERSION := $(shell $(hatch) version))
+	@if [ "$(CURRENT_BRANCH)" = "main" ]; then \
+		git tag "v$(NEW_VERSION)"; \
+		echo "Pushing v$(NEW_VERSION)"; \
+		git push origin "v$(NEW_VERSION)" "$(CURRENT_BRANCH)"; \
 	else \
 		git push -u origin "$(CURRENT_BRANCH)"; \
 	fi
 
 .PHONY: publish
 publish:
-	uvx hatch publish
+	$(hatch) build
+	$(hatch) publish
 
 .PHONY: release-pre
 release-pre: format lint test
@@ -95,4 +93,4 @@ release: release-pre version tag
 clean:
 	ruff clean
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete -o -type d -name .mypy_cache -delete
-	rm -rf build
+	rm -rf build dist *.egg-info
