@@ -80,8 +80,8 @@ tag:
 
 .PHONY: publish
 publish:
-	$(hatch) build
-	$(hatch) publish
+	uv build
+	uv publish
 
 .PHONY: release-pre
 release-pre: format lint test
