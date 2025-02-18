@@ -81,7 +81,7 @@ tag:
 		git push -u origin "$(CURRENT_BRANCH)"; \
 	fi
 
-.PHONY publish
+.PHONY: publish
 publish:
 	uvx hatch publish
 

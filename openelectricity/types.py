@@ -6,7 +6,7 @@ Matches the TypeScript definitions from the official client.
 """
 
 from enum import Enum
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal
 
 # Network and Data Types
 NetworkCode = Literal["NEM", "WEM", "AU"]
@@ -79,6 +79,6 @@ VALID_PRIMARY_GROUPINGS = ["network", "network_region"]
 VALID_SECONDARY_GROUPINGS = ["fueltech", "fueltech_group", "renewable"]
 
 # Type aliases for documentation
-Metric: TypeAlias = str  # Union of DataMetric and MarketMetric values
-TimeSeriesResult: TypeAlias = dict[str, Any]  # Matches ITimeSeriesResult
-NetworkTimeSeries: TypeAlias = dict[str, Any]  # Matches INetworkTimeSeries
+type Metric = str  # Union of DataMetric and MarketMetric values
+type TimeSeriesResult = dict[str, Any]  # Matches ITimeSeriesResult
+type NetworkTimeSeries = dict[str, Any]  # Matches INetworkTimeSeries

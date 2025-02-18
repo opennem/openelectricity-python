@@ -139,7 +139,7 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
         """
         return {series.metric: series.unit for series in self.data}
 
-    def to_polars(self) -> "pl.DataFrame":
+    def to_polars(self) -> "pl.DataFrame":  # noqa: F821
         """
         Convert time series data into a Polars DataFrame.
 
@@ -150,12 +150,12 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
             import polars as pl
         except ImportError:
             raise ImportError(
-                "Polars is required for DataFrame conversion. " "Install it with: uv add 'openelectricity[analysis]'"
+                "Polars is required for DataFrame conversion. Install it with: uv add 'openelectricity[analysis]'"
             ) from None
 
         return pl.DataFrame(self.to_records())
 
-    def to_pandas(self) -> "pd.DataFrame":
+    def to_pandas(self) -> "pd.DataFrame":  # noqa: F821
         """
         Convert time series data into a Pandas DataFrame.
 
@@ -166,7 +166,7 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
             import pandas as pd
         except ImportError:
             raise ImportError(
-                "Pandas is required for DataFrame conversion. " "Install it with: uv add 'openelectricity[analysis]'"
+                "Pandas is required for DataFrame conversion. Install it with: uv add 'openelectricity[analysis]'"
             ) from None
 
         return pd.DataFrame(self.to_records())
