@@ -1,52 +1,71 @@
-# OpenElectricity Python SDK
+# OpenElectricity Python Client
 
-A Python SDK for interacting with the OpenElectricity API. This SDK provides both synchronous and asynchronous clients for accessing OpenElectricity data.
+![logo](https://platform.openelectricity.org.au/oe_logo_full.png)
+
+> [!WARNING]
+> This project and the v4 API are currently under active development.
+
+A Python client for the [OpenElectricity](https://openelectricity.org.au) API, providing access to electricity and energy network data and metrics for Australia.
+
+> [!NOTE]
+> API key signups are currently waitlisted and will be released gradually.
+
+To obtain an API key visit [platform.openelectricity.org.au](https://platfrom.openelectricity.org.au)
+
+For documentation visit [docs.openelectricity.org.au](https://docs.openelectricity.org.au/introduction)
 
 ## Features
 
 -   Synchronous and asynchronous API clients
--   Type hints for better IDE support
+-   Fully typed with comprehensive type annotations
 -   Automatic request retries and error handling
--   Context manager support for proper resource cleanup
--   Modern Python (3.12+) with full type annotations
+-   Context manager support
+-   Modern Python (3.10+) with full type annotations
 
 ## Installation
 
 ```bash
 pip install openelectricity
+
+# or
+uv add openelectricity
 ```
 
 ## Quick Start
 
+Setup your API key in the environment variable `OPENELECTRICITY_API_KEY`.
+
+```bash
+export OPENELECTRICITY_API_KEY=<your-api-key>
+```
+
+Then in code:
+
 ```python
-from openelectricity import Client
+from openelectricity import OEClient
 
 # Using environment variable OPENELECTRICITY_API_KEY
-with Client() as client:
+with OEClient() as client:
     # API calls will be implemented here
     pass
 
-# Or provide API key directly
-client = Client(api_key="your-api-key")
+# Or provide API key directly (not recommended!)
+client = OEClient(api_key="your-api-key")
 ```
 
 For async usage:
 
 ```python
-from openelectricity import AsyncClient
+from openelectricity import AsyncOEClient
 import asyncio
 
 async def main():
-    async with AsyncClient() as client:
+    async with AsyncOEClient() as client:
         # API calls will be implemented here
         pass
 
 asyncio.run(main())
 ```
-
-## Documentation
-
-For detailed usage instructions and API reference, see the [documentation](docs/usage.md).
 
 ## Development
 
