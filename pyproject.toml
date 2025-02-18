@@ -96,4 +96,5 @@ dev = [
     "hatch>=1.14.0",
     "pyright>=1.1.394",
     "pytest-sugar>=1.0.0",
+    "ruff>=0.8.3",
 ]
