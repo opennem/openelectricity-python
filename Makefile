@@ -68,6 +68,7 @@ version:
 
 .PHONY: build
 build:
+	rm -rf dist/
 	uv build
 
 .PHONY: tag
