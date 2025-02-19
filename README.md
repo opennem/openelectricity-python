@@ -10,7 +10,7 @@ A Python client for the [OpenElectricity](https://openelectricity.org.au) API, p
 > [!NOTE]
 > API key signups are currently waitlisted and will be released gradually.
 
-To obtain an API key visit [platform.openelectricity.org.au](https://platfrom.openelectricity.org.au)
+To obtain an API key visit [platform.openelectricity.org.au](https://platform.openelectricity.org.au)
 
 For documentation visit [docs.openelectricity.org.au](https://docs.openelectricity.org.au/introduction)
 
