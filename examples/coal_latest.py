@@ -44,11 +44,12 @@ def main():
 
     # Create table for output
     table = Table(title="Coal Generation in NEM")
-    table.add_column("Facility/Unit", style="cyan")
-    table.add_column("Type", style="magenta")
+    table.add_column("Facility", style="cyan")
+    table.add_column("Unit", style="magenta")
+    table.add_column("Type", style="blue")
     table.add_column("Status", style="green")
     table.add_column("Generation", justify="right", style="yellow")
-    table.add_column("Time", style="blue")
+    table.add_column("Time", style="dim")
 
     try:
         # Get data from API
@@ -91,7 +92,8 @@ def main():
                                 unit = next(u for u in facility.units if u.code == result.columns.unit_code)
                                 status = "Operating" if latest.value > 0 else "Offline"
                                 table.add_row(
-                                    f"{facility.name}\n{unit.code}",
+                                    facility.name,
+                                    unit.code,
                                     unit.fueltech_id.value.replace("_", " ").title(),
                                     status,
                                     format_power(latest.value),
