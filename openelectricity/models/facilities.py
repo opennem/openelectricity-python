@@ -19,7 +19,7 @@ class FacilityUnit(BaseModel):
     fueltech_id: UnitFueltechType = Field(..., description="Fuel technology type")
     status_id: UnitStatusType = Field(..., description="Unit status")
     capacity_registered: float = Field(..., description="Registered capacity in MW")
-    emissions_factor_co2: float = Field(..., description="CO2 emissions factor")
+    emissions_factor_co2: float | None = Field(None, description="CO2 emissions factor")
     data_first_seen: datetime | None = Field(None, description="When data was first seen for this unit")
     data_last_seen: datetime | None = Field(None, description="When data was last seen for this unit")
     dispatch_type: str = Field(..., description="Dispatch type")

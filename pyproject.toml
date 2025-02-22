@@ -20,6 +20,8 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "aiohttp[speedups]>=3.11.12",
+    "pandas>=2.2.3",
+    "polars>=1.22.0",
     "pydantic>=2.10.3",
     "pydantic-settings>=2.7.1",
 ]
