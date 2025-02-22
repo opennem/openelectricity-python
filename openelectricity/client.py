@@ -11,9 +11,9 @@ from typing import Any, TypeVar, cast
 from aiohttp import ClientResponse, ClientSession
 
 from openelectricity.logging import get_logger
-from openelectricity.models.networks import Network
+from openelectricity.models.facilities import FacilityResponse
 from openelectricity.models.timeseries import TimeSeriesResponse
-from openelectricity.models.user import UserResponse
+from openelectricity.models.user import OpennemUserResponse
 from openelectricity.settings_schema import settings
 from openelectricity.types import (
     DataInterval,
@@ -22,6 +22,8 @@ from openelectricity.types import (
     DataSecondaryGrouping,
     MarketMetric,
     NetworkCode,
+    UnitFueltechType,
+    UnitStatusType,
 )
 
 T = TypeVar("T")
@@ -106,13 +108,31 @@ class OEClient(BaseOEClient):
         logger.debug("Received successful response: %s", response.status)
         return await response.json()
 
-    async def _async_get_networks(self) -> list[Network]:
-        """Async implementation of get_networks."""
-        logger.debug("Getting networks")
+    async def _async_get_facilities(
+        self,
+        facility_code: list[str] | None = None,
+        status_id: list[UnitStatusType] | None = None,
+        fueltech_id: list[UnitFueltechType] | None = None,
+        network_id: list[str] | None = None,
+        network_region: str | None = None,
+    ) -> FacilityResponse:
+        """Async implementation of get_facilities."""
+        logger.debug("Getting facilities")
         self._ensure_session()
-        async with cast(ClientSession, self._session).get("/networks") as response:
+        params = {
+            "facility_code": facility_code,
+            "status_id": [s.value for s in status_id] if status_id else None,
+            "fueltech_id": [f.value for f in fueltech_id] if fueltech_id else None,
+            "network_id": network_id,
+            "network_region": network_region,
+        }
+        # Remove None values
+        params = {k: v for k, v in params.items() if v is not None}
+        logger.debug("Request parameters: %s", params)
+
+        async with cast(ClientSession, self._session).get("/facilities/", params=params) as response:
             data = await self._handle_response(response)
-            return [Network.model_validate(item) for item in data]
+            return FacilityResponse.model_validate(data)
 
     async def _async_get_network_data(
         self,
@@ -151,7 +171,7 @@ class OEClient(BaseOEClient):
     async def _async_get_facility_data(
         self,
         network_code: NetworkCode,
-        facility_code: str,
+        facility_code: str | list[str],
         metrics: list[DataMetric],
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
@@ -167,6 +187,7 @@ class OEClient(BaseOEClient):
         )
         self._ensure_session()
         params = {
+            "facility_code": facility_code,
             "metrics": [m.value for m in metrics],
             "interval": interval,
             "date_start": date_start.isoformat() if date_start else None,
@@ -176,9 +197,7 @@ class OEClient(BaseOEClient):
         params = {k: v for k, v in params.items() if v is not None}
         logger.debug("Request parameters: %s", params)
 
-        async with cast(ClientSession, self._session).get(
-            f"/data/facility/{network_code}/{facility_code}", params=params
-        ) as response:
+        async with cast(ClientSession, self._session).get(f"/data/facilities/{network_code}", params=params) as response:
             data = await self._handle_response(response)
             return TimeSeriesResponse.model_validate(data)
 
@@ -214,21 +233,28 @@ class OEClient(BaseOEClient):
             data = await self._handle_response(response)
             return TimeSeriesResponse.model_validate(data)
 
-    async def _async_get_current_user(self) -> UserResponse:
+    async def _async_get_current_user(self) -> OpennemUserResponse:
         """Async implementation of get_current_user."""
         logger.debug("Getting current user information")
         self._ensure_session()
         async with cast(ClientSession, self._session).get("/me") as response:
             data = await self._handle_response(response)
-            return UserResponse.model_validate(data)
+            return OpennemUserResponse.model_validate(data)
 
-    def get_networks(self) -> list[Network]:
-        """Get a list of networks."""
+    def get_facilities(
+        self,
+        facility_code: list[str] | None = None,
+        status_id: list[UnitStatusType] | None = None,
+        fueltech_id: list[UnitFueltechType] | None = None,
+        network_id: list[str] | None = None,
+        network_region: str | None = None,
+    ) -> FacilityResponse:
+        """Get a list of facilities."""
 
         async def _run():
             async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
                 self._session = session
-                return await self._async_get_networks()
+                return await self._async_get_facilities(facility_code, status_id, fueltech_id, network_id, network_region)
 
         return asyncio.run(_run())
 
@@ -256,7 +282,7 @@ class OEClient(BaseOEClient):
     def get_facility_data(
         self,
         network_code: NetworkCode,
-        facility_code: str,
+        facility_code: str | list[str],
         metrics: list[DataMetric],
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
@@ -289,7 +315,7 @@ class OEClient(BaseOEClient):
 
         return asyncio.run(_run())
 
-    def get_current_user(self) -> UserResponse:
+    def get_current_user(self) -> OpennemUserResponse:
         """Get current user information."""
 
         async def _run():
@@ -347,13 +373,31 @@ class AsyncOEClient(BaseOEClient):
         logger.debug("Received successful response: %s", response.status)
         return await response.json()
 
-    async def get_networks(self) -> list[Network]:
-        """Get a list of networks."""
-        logger.debug("Getting networks")
+    async def get_facilities(
+        self,
+        facility_code: list[str] | None = None,
+        status_id: list[UnitStatusType] | None = None,
+        fueltech_id: list[UnitFueltechType] | None = None,
+        network_id: list[str] | None = None,
+        network_region: str | None = None,
+    ) -> FacilityResponse:
+        """Get a list of facilities."""
+        logger.debug("Getting facilities")
         await self._ensure_client()
-        async with cast(ClientSession, self.client).get("/networks") as response:
+        params = {
+            "facility_code": facility_code,
+            "status_id": [s.value for s in status_id] if status_id else None,
+            "fueltech_id": [f.value for f in fueltech_id] if fueltech_id else None,
+            "network_id": network_id,
+            "network_region": network_region,
+        }
+        # Remove None values
+        params = {k: v for k, v in params.items() if v is not None}
+        logger.debug("Request parameters: %s", params)
+
+        async with cast(ClientSession, self.client).get("/facilities/", params=params) as response:
             data = await self._handle_response(response)
-            return [Network.model_validate(item) for item in data]
+            return FacilityResponse.model_validate(data)
 
     async def get_network_data(
         self,
@@ -392,7 +436,7 @@ class AsyncOEClient(BaseOEClient):
     async def get_facility_data(
         self,
         network_code: NetworkCode,
-        facility_code: str,
+        facility_code: str | list[str],
         metrics: list[DataMetric],
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
@@ -408,6 +452,7 @@ class AsyncOEClient(BaseOEClient):
         )
         await self._ensure_client()
         params = {
+            "facility_code": facility_code,
             "metrics": [m.value for m in metrics],
             "interval": interval,
             "date_start": date_start.isoformat() if date_start else None,
@@ -417,9 +462,7 @@ class AsyncOEClient(BaseOEClient):
         params = {k: v for k, v in params.items() if v is not None}
         logger.debug("Request parameters: %s", params)
 
-        async with cast(ClientSession, self.client).get(
-            f"/data/facility/{network_code}/{facility_code}", params=params
-        ) as response:
+        async with cast(ClientSession, self.client).get(f"/data/facilities/{network_code}", params=params) as response:
             data = await self._handle_response(response)
             return TimeSeriesResponse.model_validate(data)
 
@@ -455,13 +498,13 @@ class AsyncOEClient(BaseOEClient):
             data = await self._handle_response(response)
             return TimeSeriesResponse.model_validate(data)
 
-    async def get_current_user(self) -> UserResponse:
+    async def get_current_user(self) -> OpennemUserResponse:
         """Get current user information."""
         logger.debug("Getting current user information")
         await self._ensure_client()
         async with cast(ClientSession, self.client).get("/me") as response:
             data = await self._handle_response(response)
-            return UserResponse.model_validate(data)
+            return OpennemUserResponse.model_validate(data)
 
     async def close(self) -> None:
         """Close the underlying HTTP client."""

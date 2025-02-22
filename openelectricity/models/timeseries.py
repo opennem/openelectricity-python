@@ -55,11 +55,29 @@ class NetworkTimeSeries(BaseModel):
     metric: str
     unit: str
     interval: DataInterval
-    start: datetime
-    end: datetime
+    start: datetime | None = None
+    end: datetime | None = None
     groupings: list[str] = Field(default_factory=list)
     results: list[TimeSeriesResult]
     network_timezone_offset: str
+
+    @property
+    def date_range(self) -> tuple[datetime | None, datetime | None]:
+        """Get the date range from the results if not explicitly set."""
+        if self.start is not None and self.end is not None:
+            return self.start, self.end
+
+        # Try to get dates from results
+        if not self.results:
+            return None, None
+
+        start_dates = [r.date_start for r in self.results if r.date_start is not None]
+        end_dates = [r.date_end for r in self.results if r.date_end is not None]
+
+        if not start_dates or not end_dates:
+            return None, None
+
+        return min(start_dates), max(end_dates)
 
 
 class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):

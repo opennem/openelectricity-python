@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import polars as pl
 
 from openelectricity import OEClient
-from openelectricity.types import DataMetric
+from openelectricity.types import DataMetric, UnitFueltechType, UnitStatusType
 
 
 def main():
@@ -23,6 +23,14 @@ def main():
 
     # Get data from API
     with OEClient() as client:
+        # Get facilities
+        facilities = client.get_facilities(
+            network_id=["NEM"],
+            status_id=[UnitStatusType.OPERATING],
+            fueltech_id=[UnitFueltechType.SOLAR_UTILITY, UnitFueltechType.WIND],
+        )
+
+        # Get network data
         response = client.get_network_data(
             network_code="NEM",
             metrics=[DataMetric.POWER, DataMetric.ENERGY],
@@ -70,8 +78,8 @@ def main():
     total_energy = df["energy"].sum()
     energy_percentage = (
         df.group_by("fueltech_group")
-        .agg(pl.col("energy").sum().alias("total_energy_mwh"))
-        .with_columns((pl.col("total_energy_mwh") / total_energy * 100).alias("percentage"))
+        .agg(pl.col("energy").sum().alias("total_energy"))
+        .with_columns((pl.col("total_energy") / total_energy * 100).alias("percentage"))
         .sort("percentage", descending=True)
     )
 

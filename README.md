@@ -53,7 +53,7 @@ Then in your code:
 ```python
 from datetime import datetime, timedelta
 from openelectricity import OEClient
-from openelectricity.types import DataMetric
+from openelectricity.types import DataMetric, UnitFueltechType, UnitStatusType
 
 # Calculate date range
 end_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -61,6 +61,13 @@ start_date = end_date - timedelta(days=7)
 
 # Using context manager (recommended)
 with OEClient() as client:
+    # Get operating solar and wind facilities
+    facilities = client.get_facilities(
+        network_id=["NEM"],
+        status_id=[UnitStatusType.OPERATING],
+        fueltech_id=[UnitFueltechType.SOLAR_UTILITY, UnitFueltechType.WIND],
+    )
+
     # Get network data for NEM
     response = client.get_network_data(
         network_code="NEM",
@@ -91,11 +98,19 @@ import asyncio
 
 async def main():
     async with AsyncOEClient() as client:
-        # by default gets the last 3 days of data
+        # Get operating solar and wind facilities
+        facilities = await client.get_facilities(
+            network_id=["NEM"],
+            status_id=[UnitStatusType.OPERATING],
+            fueltech_id=[UnitFueltechType.SOLAR_UTILITY, UnitFueltechType.WIND],
+        )
+
+        # Get network data
         response = await client.get_network_data(
             network_code="NEM",
             metrics=[DataMetric.POWER],
             interval="1d",
+            secondary_grouping="fueltech_group",
         )
         # Process response...
 
@@ -112,6 +127,9 @@ The client provides built-in support for converting API responses to popular dat
 # Make sure you've installed with analysis extras
 # uv add "openelectricity[analysis]"
 
+from openelectricity import OEClient
+from openelectricity.types import DataMetric
+
 with OEClient() as client:
     response = client.get_network_data(
         network_code="NEM",
@@ -120,13 +138,13 @@ with OEClient() as client:
         secondary_grouping="fueltech_group",
     )
 
-    # Convert directly to Polars DataFrame
+    # Convert to Polars DataFrame
     df = response.to_polars()
 
-    # Get metric units for reference
+    # Get metric units
     units = response.get_metric_units()
 
-    # Example analysis
+    # Analyze data
     energy_by_fueltech = (
         df.group_by("fueltech_group")
         .agg(
@@ -140,18 +158,35 @@ with OEClient() as client:
 ### Using with Pandas
 
 ```python
-# Convert directly to Pandas DataFrame
-df = response.to_pandas()
+# Make sure you've installed with analysis extras
+# uv add "openelectricity[analysis]"
 
-# Example analysis
-daily_totals = (
-    df.groupby("interval")
-    .agg({
-        "energy": "sum",
-        "power": "sum"
-    })
-    .sort_index()
-)
+from openelectricity import OEClient
+from openelectricity.types import DataMetric
+
+with OEClient() as client:
+    response = client.get_network_data(
+        network_code="NEM",
+        metrics=[DataMetric.POWER, DataMetric.ENERGY],
+        interval="1d",
+        secondary_grouping="fueltech_group",
+    )
+
+    # Convert to Pandas DataFrame
+    df = response.to_pandas()
+
+    # Get metric units
+    units = response.get_metric_units()
+
+    # Analyze data
+    energy_by_fueltech = (
+        df.groupby("fueltech_group")
+        .agg({
+            "energy": "sum",
+            "power": "mean",
+        })
+        .sort_values("energy", ascending=False)
+    )
 ```
 
 ## Development

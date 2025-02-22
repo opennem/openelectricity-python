@@ -11,7 +11,7 @@ import asyncio
 from datetime import datetime, timedelta
 
 from openelectricity import AsyncOEClient, OEClient
-from openelectricity.types import DataMetric
+from openelectricity.types import DataMetric, UnitFueltechType, UnitStatusType
 
 
 def sync_example():
@@ -22,6 +22,16 @@ def sync_example():
 
     # Initialize client
     with OEClient() as client:
+        # Get facilities
+        facilities = client.get_facilities(
+            network_id=["NEM"],
+            status_id=[UnitStatusType.OPERATING],
+            fueltech_id=[UnitFueltechType.SOLAR_UTILITY, UnitFueltechType.WIND],
+        )
+        print("\nFacilities:")
+        for facility in facilities.data:
+            print(f"  {facility.network_code}: {facility.metric}")
+
         # Get network data for NEM
         response = client.get_network_data(
             network_code="NEM",
@@ -56,20 +66,29 @@ def sync_example():
 
 async def async_example():
     """Example using the asynchronous client."""
-    # Calculate date range for last month
+    # Calculate date range for last week
     end_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     start_date = end_date - timedelta(days=7)
 
-    # Initialize client
     async with AsyncOEClient() as client:
-        # Get network data for NEM
+        # Get facilities
+        facilities = await client.get_facilities(
+            network_id=["NEM"],
+            status_id=[UnitStatusType.OPERATING],
+            fueltech_id=[UnitFueltechType.SOLAR_UTILITY, UnitFueltechType.WIND],
+        )
+        print("\nFacilities:")
+        for facility in facilities.data:
+            print(f"  {facility.network_code}: {facility.metric}")
+
+        # Get network data
         response = await client.get_network_data(
             network_code="NEM",
-            metrics=[DataMetric.POWER, DataMetric.ENERGY],
-            interval="1d",  # Daily intervals
+            metrics=[DataMetric.POWER],
+            interval="1d",
             date_start=start_date,
             date_end=end_date,
-            secondary_grouping="fueltech_group",  # Group by fuel technology
+            secondary_grouping="fueltech_group",
         )
 
         # Print results
@@ -95,11 +114,8 @@ async def async_example():
 
 
 def main():
-    """Run both sync and async examples."""
-    # Run synchronous example
+    """Run both examples."""
     sync_example()
-
-    # Run async example
     asyncio.run(async_example())
 
 

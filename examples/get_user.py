@@ -23,10 +23,21 @@ def main():
         print(f"Name: {user.full_name}")
         print(f"Email: {user.email}")
         print(f"Plan: {user.plan}")
+        print(f"Roles: {', '.join(role.value for role in user.roles)}")
 
-        # Display rate limit information
-        print("\nAPI Usage:")
-        print(f"Remaining calls: {user.meta.remaining}")
+        # Display rate limit information if available
+        if user.rate_limit:
+            print("\nRate Limit Information:")
+            print(f"Limit: {user.rate_limit.limit}")
+            print(f"Remaining: {user.rate_limit.remaining}")
+            print(f"Reset: {user.rate_limit.reset}")
+
+        # Display API usage if available
+        if user.meta:
+            print("\nAPI Usage:")
+            print(f"Remaining calls: {user.meta.remaining}")
+            if user.meta.reset:
+                print(f"Reset time: {user.meta.reset}")
 
 
 if __name__ == "__main__":

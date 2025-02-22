@@ -12,7 +12,7 @@ from typing import Any, Literal
 NetworkCode = Literal["NEM", "WEM", "AU"]
 DataInterval = Literal["5m", "1h", "1d", "7d", "1M", "3M", "season", "1y", "fy"]
 DataPrimaryGrouping = Literal["network", "network_region"]
-DataSecondaryGrouping = Literal["fueltech", "fueltech_group", "renewable"]
+DataSecondaryGrouping = Literal["fueltech", "fueltech_group", "status", "renewable"]
 
 
 class Network(str, Enum):
@@ -30,6 +30,7 @@ class DataMetric(str, Enum):
     ENERGY = "energy"
     EMISSIONS = "emissions"
     MARKET_VALUE = "market_value"
+    RENEWABLE_PROPORTION = "renewable_proportion"
 
 
 class MarketMetric(str, Enum):
@@ -38,6 +39,57 @@ class MarketMetric(str, Enum):
     PRICE = "price"
     DEMAND = "demand"
     DEMAND_ENERGY = "demand_energy"
+
+
+class UnitFueltechType(str, Enum):
+    """Types of fuel technologies for units."""
+
+    BATTERY = "battery"
+    BATTERY_CHARGING = "battery_charging"
+    BATTERY_DISCHARGING = "battery_discharging"
+    BIOENERGY_BIOGAS = "bioenergy_biogas"
+    BIOENERGY_BIOMASS = "bioenergy_biomass"
+    COAL_BLACK = "coal_black"
+    COAL_BROWN = "coal_brown"
+    DISTILLATE = "distillate"
+    GAS_CCGT = "gas_ccgt"
+    GAS_OCGT = "gas_ocgt"
+    GAS_RECIP = "gas_recip"
+    GAS_STEAM = "gas_steam"
+    GAS_WCMG = "gas_wcmg"
+    HYDRO = "hydro"
+    PUMPS = "pumps"
+    SOLAR_ROOFTOP = "solar_rooftop"
+    SOLAR_THERMAL = "solar_thermal"
+    SOLAR_UTILITY = "solar_utility"
+    NUCLEAR = "nuclear"
+    OTHER = "other"
+    SOLAR = "solar"
+    WIND = "wind"
+    WIND_OFFSHORE = "wind_offshore"
+    IMPORTS = "imports"
+    EXPORTS = "exports"
+    INTERCONNECTOR = "interconnector"
+    AGGREGATOR_VPP = "aggregator_vpp"
+    AGGREGATOR_DR = "aggregator_dr"
+
+
+class UnitStatusType(str, Enum):
+    """Types of unit statuses."""
+
+    COMMITTED = "committed"
+    OPERATING = "operating"
+    RETIRED = "retired"
+
+
+class OpenNEMRoles(str, Enum):
+    """User roles in the OpenNEM system."""
+
+    ADMIN = "admin"
+    PRO = "pro"
+    ACADEMIC = "academic"
+    USER = "user"
+    ANONYMOUS = "anonymous"
 
 
 class MilestoneType(str, Enum):
@@ -76,7 +128,7 @@ class MilestoneAggregate(str, Enum):
 VALID_NETWORKS = ["NEM", "WEM", "AU"]
 VALID_INTERVALS = ["5m", "1h", "1d", "7d", "1M", "3M", "season", "1y", "fy"]
 VALID_PRIMARY_GROUPINGS = ["network", "network_region"]
-VALID_SECONDARY_GROUPINGS = ["fueltech", "fueltech_group", "renewable"]
+VALID_SECONDARY_GROUPINGS = ["fueltech", "fueltech_group", "status", "renewable"]
 
 # Type aliases for documentation
 type Metric = str  # Union of DataMetric and MarketMetric values
