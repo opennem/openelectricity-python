@@ -12,3 +12,4 @@ wheels/
 data/
 .cursorrules
 .env
+*.png

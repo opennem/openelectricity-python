@@ -39,8 +39,12 @@ class MarketMetric(str, Enum):
     PRICE = "price"
     DEMAND = "demand"
     DEMAND_ENERGY = "demand_energy"
+    CURTAILMENT = "curtailment"
+    CURTAILMENT_ENERGY = "curtailment_energy"
     CURTAILMENT_SOLAR = "curtailment_solar"
+    CURTAILMENT_SOLAR_ENERGY = "curtailment_solar_energy"
     CURTAILMENT_WIND = "curtailment_wind"
+    CURTAILMENT_WIND_ENERGY = "curtailment_wind_energy"
 
 
 class UnitFueltechType(str, Enum):
