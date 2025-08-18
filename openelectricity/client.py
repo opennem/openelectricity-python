@@ -321,7 +321,9 @@ class OEClient(BaseOEClient):
         async def _run():
             async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
                 self._session = session
-                return await self._async_get_market(network_code, metrics, interval, date_start, date_end, primary_grouping, network_region)
+                return await self._async_get_market(
+                    network_code, metrics, interval, date_start, date_end, primary_grouping, network_region
+                )
 
         return asyncio.run(_run())
 
