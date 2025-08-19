@@ -1,8 +1,10 @@
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, ConfigDict, Field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env")
+
     env: str = Field(default="development", validation_alias=AliasChoices("ENV"))
     api_key: str = Field(..., validation_alias=AliasChoices("OPENELECTRICITY_API_KEY"))
     base_url: str = Field(
@@ -17,9 +19,6 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.env in ["production", "prod"]
-
-    class Config:
-        env_file = ".env"
 
 
 settings = Settings()
