@@ -1526,8 +1526,6 @@ name = "openelectricity"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp", extra = ["speedups"] },
-    { name = "pandas" },
-    { name = "polars" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
@@ -1562,8 +1560,6 @@ requires-dist = [
     { name = "aiohttp", extras = ["speedups"], specifier = ">=3.11.12" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.3" },
     { name = "hatch", marker = "extra == 'dev'", specifier = ">=1.14.0" },
-    { name = "pandas", specifier = ">=2.2.3" },
-    { name = "polars", specifier = ">=1.22.0" },
     { name = "polars", marker = "extra == 'analysis'", specifier = ">=0.20.5" },
     { name = "pyarrow", marker = "extra == 'analysis'", specifier = ">=15.0.0" },
     { name = "pydantic", specifier = ">=2.10.3" },
