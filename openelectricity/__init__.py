@@ -13,8 +13,10 @@ __version__ = "0.5.1"
 __all__ = ["OEClient", "AsyncOEClient"]
 
 # Optional imports for styling (won't fail if dependencies are missing)
+# We don't actually import the module here, just expose it conditionally
 try:
-    from openelectricity import styles
+    import openelectricity.styles  # noqa: F401
+
     __all__.append("styles")
 except ImportError:
     pass  # Styling module requires matplotlib/seaborn which are optional
