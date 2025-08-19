@@ -6,14 +6,11 @@ This module contains the base models used across the API.
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
-T = TypeVar("T")
 
-
-class APIResponse(BaseModel, Generic[T]):
+class APIResponse[T](BaseModel):
     """Base API response model."""
 
     version: str
