@@ -13,3 +13,4 @@ data/
 .cursorrules
 .env
 *.png
+.DS_Store
