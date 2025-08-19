@@ -1547,6 +1547,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "anyio" },
     { name = "hatch" },
     { name = "matplotlib" },
     { name = "pyright" },
@@ -1574,6 +1575,7 @@ provides-extras = ["analysis", "dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "anyio", specifier = ">=4.10.0" },
     { name = "hatch", specifier = ">=1.14.0" },
     { name = "matplotlib", specifier = ">=3.10.5" },
     { name = "pyright", specifier = ">=1.1.394" },
