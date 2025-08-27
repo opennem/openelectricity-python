@@ -3,21 +3,20 @@ name = "openelectricity"
 description = "OpenElectricity Python Client"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = {text = "MIT"}
 authors = [
-    { name = "Nik Cubrilovic", email = "git@nikcub.me", url = "https://nikcub.me" },
+    { name = "Nik Cubrilovic", email = "git@nikcub.me" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dynamic = ["version"]
+version = "0.6.0"
 dependencies = [
     "aiohttp[speedups]>=3.11.12",
     "pydantic>=2.10.3",
@@ -26,7 +25,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "hatch>=1.14.0",
     "ruff>=0.8.3",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
@@ -40,11 +38,8 @@ analysis = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.version]
-path = "openelectricity/__init__.py"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 target-version = "py312"
@@ -99,7 +94,6 @@ testpaths = [
 [dependency-groups]
 dev = [
     "anyio>=4.10.0",
-    "hatch>=1.14.0",
     "matplotlib>=3.10.5",
     "pyright>=1.1.394",
     "pytest-sugar>=1.0.0",

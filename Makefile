@@ -8,7 +8,6 @@ ruff-check = uv run ruff check $(projectname)
 mypy = uv run mypy $(projectname)
 pytest = uv run pytest tests -v
 pyright = uv run pyright -v .venv $(projectname)
-hatch = uvx hatch
 BUMP ?= dev
 
 .PHONY: test
@@ -35,22 +34,17 @@ check:
 	$(pyright)
 
 
-.PHONY: build
-build:
-	$(hatch) build
-
-
 .PHONY: version
 version:
-	@if ! echo "release major minor patch fix alpha beta rc rev post dev" | grep -w "$(BUMP)" > /dev/null; then \
-		echo "Error: BUMP must be one of: release, major, minor, patch, fix, alpha, beta, rc, rev, post, dev"; \
+	@if ! echo "major minor patch stable alpha beta rc post dev" | grep -w "$(BUMP)" > /dev/null; then \
+		echo "Error: BUMP must be one of: major, minor, patch, stable, alpha, beta, rc, post, dev"; \
 		exit 1; \
 	fi
-	# if the branch is main then bump needs to be either major minor patch or release
+	# if the branch is main then bump needs to be either major minor patch or stable
 	@current_branch=$$(git rev-parse --abbrev-ref HEAD); \
 	if [ "$$current_branch" = "main" ]; then \
-		if [ "$(BUMP)" != "major" ] && [ "$(BUMP)" != "minor" ] && [ "$(BUMP)" != "patch" ] && [ "$(BUMP)" != "release" ] && [ "$(BUMP)" != "rc" ]; then \
-			echo "Error: Cannot bump on main branch unless it is major, minor, patch or release"; \
+		if [ "$(BUMP)" != "major" ] && [ "$(BUMP)" != "minor" ] && [ "$(BUMP)" != "patch" ] && [ "$(BUMP)" != "stable" ] && [ "$(BUMP)" != "rc" ]; then \
+			echo "Error: Cannot bump on main branch unless it is major, minor, patch, stable or rc"; \
 			exit 1; \
 		fi \
 	fi; \
@@ -60,10 +54,12 @@ version:
 			exit 1; \
 		fi \
 	fi; \
-	$(hatch) version $(BUMP); \
-	NEW_VERSION=$$(sed -n 's/__version__ = "\([^"]*\)".*/\1/p' $(projectname)/__init__.py); \
+	uv version --bump $(BUMP); \
+	NEW_VERSION=$$(uv version --short); \
 	echo "New version: $$NEW_VERSION"; \
-	git add $(projectname)/__init__.py; \
+	# Update version in __init__.py
+	sed -i '' "s/__version__ = .*/__version__ = \"$$NEW_VERSION\"/" $(projectname)/__init__.py; \
+	git add pyproject.toml $(projectname)/__init__.py; \
 	git commit -m "Bump version to $$NEW_VERSION"
 
 .PHONY: build
@@ -74,7 +70,7 @@ build:
 .PHONY: tag
 tag:
 	$(eval CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
-	$(eval NEW_VERSION := $(shell $(hatch) version))
+	$(eval NEW_VERSION := $(shell uv version --short))
 	@if [ "$(CURRENT_BRANCH)" = "main" ]; then \
 		git tag "v$(NEW_VERSION)"; \
 		echo "Pushing v$(NEW_VERSION)"; \
