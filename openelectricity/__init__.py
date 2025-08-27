@@ -8,7 +8,7 @@ from openelectricity.client import AsyncOEClient, OEClient
 
 __name__ = "openelectricity"
 
-__version__ = ""
+__version__ = "0.6.1"
 
 __all__ = ["OEClient", "AsyncOEClient"]
 

@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-version = "0.6.1"
+dynamic = ["version"]
 dependencies = [
     "aiohttp[speedups]>=3.11.12",
     "pydantic>=2.10.3",
@@ -38,8 +38,11 @@ analysis = [
 ]
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "openelectricity/__init__.py"
 
 [tool.ruff]
 target-version = "py312"

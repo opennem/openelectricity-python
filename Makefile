@@ -54,12 +54,11 @@ version:
 			exit 1; \
 		fi \
 	fi; \
-	uv version --bump $(BUMP); \
-	NEW_VERSION=$$(uv version --short); \
+	# Use hatchling's version management
+	uvx hatch version $(BUMP); \
+	NEW_VERSION=$$(uvx hatch version); \
 	echo "New version: $$NEW_VERSION"; \
-	# Update version in __init__.py
-	sed -i '' "s/__version__ = .*/__version__ = \"$$NEW_VERSION\"/" $(projectname)/__init__.py; \
-	git add pyproject.toml $(projectname)/__init__.py; \
+	git add $(projectname)/__init__.py; \
 	git commit -m "Bump version to $$NEW_VERSION"
 
 .PHONY: build
@@ -70,7 +69,7 @@ build:
 .PHONY: tag
 tag:
 	$(eval CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
-	$(eval NEW_VERSION := $(shell uv version --short))
+	$(eval NEW_VERSION := $(shell uvx hatch version))
 	@if [ "$(CURRENT_BRANCH)" = "main" ]; then \
 		git tag "v$(NEW_VERSION)"; \
 		echo "Pushing v$(NEW_VERSION)"; \
