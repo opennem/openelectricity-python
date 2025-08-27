@@ -1274,7 +1274,6 @@ wheels = [
 
 [[package]]
 name = "openelectricity"
-version = "0.6.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp", extra = ["speedups"] },
@@ -1321,7 +1320,7 @@ requires-dist = [
     { name = "rich", marker = "extra == 'analysis'", specifier = ">=13.7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.3" },
 ]
-provides-extras = ["dev", "analysis"]
+provides-extras = ["analysis", "dev"]
 
 [package.metadata.requires-dev]
 dev = [
