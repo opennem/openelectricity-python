@@ -42,7 +42,7 @@ def fetch_curtailment_power(client: OEClient, days_back: int = 3) -> pd.DataFram
     response = client.get_market(
         network_code="NEM",
         metrics=[
-            MarketMetric.CURTAILMENT_SOLAR,
+            MarketMetric.CURTAILMENT_SOLAR_UTILITY,
             MarketMetric.CURTAILMENT_WIND,
             MarketMetric.CURTAILMENT
         ],
@@ -112,7 +112,7 @@ def display_latest_values(df: pd.DataFrame):
         
         region_data = latest_df[latest_df["region"] == region]
         
-        solar = region_data[region_data["metric"] == "curtailment_solar"]["value"].sum()
+        solar = region_data[region_data["metric"] == "curtailment_solar_utility"]["value"].sum()
         wind = region_data[region_data["metric"] == "curtailment_wind"]["value"].sum()
         total = region_data[region_data["metric"] == "curtailment"]["value"].sum()
         
@@ -150,7 +150,7 @@ def display_period_summary(df: pd.DataFrame):
         region_df = df[df["region"] == region]
         
         # Solar statistics
-        solar_df = region_df[region_df["metric"] == "curtailment_solar"]
+        solar_df = region_df[region_df["metric"] == "curtailment_solar_utility"]
         if not solar_df.empty:
             solar_values = solar_df["value"].values
             print("  Solar Curtailment:")
@@ -186,7 +186,7 @@ def display_nem_summary(df: pd.DataFrame):
     latest_time = df["datetime"].max()
     latest_df = df[df["datetime"] == latest_time]
     
-    total_solar = latest_df[latest_df["metric"] == "curtailment_solar"]["value"].sum()
+    total_solar = latest_df[latest_df["metric"] == "curtailment_solar_utility"]["value"].sum()
     total_wind = latest_df[latest_df["metric"] == "curtailment_wind"]["value"].sum()
     total_curtailment = latest_df[latest_df["metric"] == "curtailment"]["value"].sum()
     
@@ -222,7 +222,7 @@ def display_time_series_sample(df: pd.DataFrame):
     print("=" * 60)
     
     # Show NSW1 solar as an example
-    nsw1_solar = df[(df["region"] == "NSW1") & (df["metric"] == "curtailment_solar")]
+    nsw1_solar = df[(df["region"] == "NSW1") & (df["metric"] == "curtailment_solar_utility")]
     
     if not nsw1_solar.empty:
         print("\nNSW1 Solar Curtailment (Last 5 intervals):")
