@@ -55,7 +55,7 @@ def fetch_curtailment_data(client: OEClient, days_back: int = 5) -> pd.DataFrame
         # Fetch curtailment data for ALL regions in one call
         response = client.get_market(
             network_code="NEM",
-            metrics=[MarketMetric.CURTAILMENT_SOLAR, MarketMetric.CURTAILMENT_WIND],
+            metrics=[MarketMetric.CURTAILMENT_SOLAR_UTILITY, MarketMetric.CURTAILMENT_WIND],
             interval="5m",
             date_start=pd.to_datetime(date_start),
             date_end=pd.to_datetime(date_end),
@@ -68,7 +68,7 @@ def fetch_curtailment_data(client: OEClient, days_back: int = 5) -> pd.DataFrame
 
             for result in timeseries.results:
                 # Extract region from result name (format: metric_REGION)
-                # e.g., "curtailment_solar_NSW1" -> "NSW1"
+                # e.g., "curtailment_solar_utility_NSW1" -> "NSW1"
                 name_parts = result.name.split("_")
                 region = name_parts[-1] if len(name_parts) > 1 else "Unknown"
 
@@ -196,8 +196,8 @@ def create_combined_chart(df: pd.DataFrame):
     # Plot each region's data
     for region in regions:
         # Solar curtailment
-        if (region, "curtailment_solar") in combined_pivot.columns:
-            solar_values = combined_pivot[(region, "curtailment_solar")].values
+        if (region, "curtailment_solar_utility") in combined_pivot.columns:
+            solar_values = combined_pivot[(region, "curtailment_solar_utility")].values
             ax.bar(
                 x_pos,
                 solar_values,
@@ -262,7 +262,7 @@ def print_summary_statistics(df: pd.DataFrame):
     print("=" * 60)
 
     # Overall statistics
-    solar_data = df[df["metric"] == "curtailment_solar"]
+    solar_data = df[df["metric"] == "curtailment_solar_utility"]
     wind_data = df[df["metric"] == "curtailment_wind"]
 
     if not solar_data.empty:
