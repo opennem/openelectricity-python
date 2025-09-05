@@ -31,6 +31,7 @@ class DataMetric(str, Enum):
     EMISSIONS = "emissions"
     MARKET_VALUE = "market_value"
     RENEWABLE_PROPORTION = "renewable_proportion"
+    STORAGE_BATTERY = "storage_battery"
 
 
 class MarketMetric(str, Enum):
