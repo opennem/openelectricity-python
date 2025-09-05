@@ -17,7 +17,7 @@ from openelectricity.types import DataInterval, NetworkCode
 class TimeSeriesDataPoint(RootModel):
     """Individual data point in a time series."""
 
-    root: tuple[datetime, float]
+    root: tuple[datetime, float | None]
 
     @property
     def timestamp(self) -> datetime:
@@ -25,7 +25,7 @@ class TimeSeriesDataPoint(RootModel):
         return self.root[0]
 
     @property
-    def value(self) -> float:
+    def value(self) -> float | None:
         """Get the value from the data point."""
         return self.root[1]
 
