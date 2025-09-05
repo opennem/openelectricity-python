@@ -19,10 +19,19 @@ class FacilityUnit(BaseModel):
     fueltech_id: UnitFueltechType = Field(..., description="Fuel technology type")
     status_id: UnitStatusType = Field(..., description="Unit status")
     capacity_registered: float = Field(..., description="Registered capacity in MW")
+    capacity_maximum: float | None = Field(None, description="Maximum capacity in MW")
+    capacity_storage: float | None = Field(None, description="Storage capacity in MWh")
     emissions_factor_co2: float | None = Field(None, description="CO2 emissions factor")
     data_first_seen: datetime | None = Field(None, description="When data was first seen for this unit")
     data_last_seen: datetime | None = Field(None, description="When data was last seen for this unit")
     dispatch_type: str = Field(..., description="Dispatch type")
+
+
+class FacilityLocation(BaseModel):
+    """Location coordinates for a facility."""
+
+    lat: float = Field(..., description="Latitude")
+    lng: float = Field(..., description="Longitude")
 
 
 class Facility(BaseModel):
@@ -33,6 +42,8 @@ class Facility(BaseModel):
     network_id: NetworkCode = Field(..., description="Network code")
     network_region: str = Field(..., description="Network region")
     description: str | None = Field(None, description="Facility description")
+    npi_id: str | None = Field(None, description="NPI facility ID")
+    location: FacilityLocation | None = Field(None, description="Facility location coordinates")
     units: list[FacilityUnit] = Field(..., description="Units within the facility")
 
 
