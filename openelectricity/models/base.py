@@ -13,8 +13,8 @@ from pydantic import BaseModel, Field
 class APIResponse[T](BaseModel):
     """Base API response model."""
 
-    version: str
-    created_at: datetime
+    version: str | None = None
+    created_at: datetime | None = None
     success: bool = True
     error: str | None = None
     data: Sequence[T] = Field(default_factory=list)

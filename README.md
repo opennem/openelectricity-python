@@ -45,7 +45,7 @@ First, set your API key in the environment:
 export OPENELECTRICITY_API_KEY=your-api-key
 
 # Optional: Override API server (defaults to production)
-export OPENELECTRICITY_API_URL=http://localhost:8000/v4
+export OPENELECTRICITY_API_URL=http://localhost:8000
 ```
 
 Then in your code:

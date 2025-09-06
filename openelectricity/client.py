@@ -8,6 +8,7 @@ import asyncio
 from datetime import datetime
 from typing import Any, TypeVar, cast
 
+import requests
 from aiohttp import ClientResponse, ClientSession
 
 from openelectricity.logging import get_logger
@@ -80,17 +81,265 @@ class BaseOEClient:
 
 class OEClient(BaseOEClient):
     """
-    Synchronous client for the OpenElectricity API.
+    Synchronous client for the OpenElectricity API using the requests library.
+    
+    This client follows best practices for HTTP clients:
+    - Uses session objects for connection pooling and performance
+    - Implements proper error handling and logging
+    - Provides context manager support
+    - Handles parameter validation and URL construction
+    """
+
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
+        super().__init__(api_key, base_url)
+        self._session: requests.Session | None = None
+        logger.debug("Initialized synchronous client")
+
+    def get_spark_session(self) -> "SparkSession":
+        """
+        Get a Spark session that works in both Databricks and local environments.
+        
+        This method provides access to the centralized Spark session management
+        from the spark_utils module.
+        
+        Returns:
+            SparkSession: Configured Spark session
+            
+        Raises:
+            ImportError: If PySpark is not available
+            Exception: If unable to create Spark session
+        """
+        from openelectricity.spark_utils import get_spark_session
+        return get_spark_session()
+
+    def is_spark_available(self) -> bool:
+        """
+        Check if PySpark is available in the current environment.
+        
+        Returns:
+            bool: True if PySpark can be imported, False otherwise
+        """
+        from openelectricity.spark_utils import is_spark_available
+        return is_spark_available()
+
+    def _ensure_session(self) -> requests.Session:
+        """Ensure session is initialized and return it."""
+        if self._session is None:
+            logger.debug("Creating new requests session")
+            self._session = requests.Session()
+            self._session.headers.update(self.headers)
+            # Configure session for better performance
+            self._session.mount("https://", requests.adapters.HTTPAdapter(
+                pool_connections=10,
+                pool_maxsize=20,
+                max_retries=3,
+                pool_block=False
+            ))
+        return self._session
+
+    def _handle_response(self, response: requests.Response) -> dict[str, Any] | list[dict[str, Any]]:
+        """Handle API response and raise appropriate errors."""
+        if not response.ok:
+            try:
+                detail = response.json().get("detail", response.reason)
+            except Exception:
+                detail = response.reason
+            logger.error("API error: %s - %s", response.status_code, detail)
+            raise APIError(response.status_code, detail)
+
+        logger.debug("Received successful response: %s", response.status_code)
+        
+        # Add this line to see the raw JSON response
+        raw_json = response.json()
+        logger.debug("Raw JSON response: %s", raw_json)
+        
+        return raw_json
+
+    def _build_url(self, endpoint: str) -> str:
+        """Build full URL from endpoint."""
+        # Ensure endpoint starts with / and remove any double slashes
+        if not endpoint.startswith('/'):
+            endpoint = '/' + endpoint
+        return f"{self.base_url.rstrip('/')}/v4{endpoint}"
+
+    def _clean_params(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Remove None values from parameters."""
+        return {k: v for k, v in params.items() if v is not None}
+
+    def get_facilities(
+        self,
+        facility_code: list[str] | None = None,
+        status_id: list[UnitStatusType] | None = None,
+        fueltech_id: list[UnitFueltechType] | None = None,
+        network_id: list[str] | None = None,
+        network_region: str | None = None,
+    ) -> FacilityResponse:
+        """Get a list of facilities."""
+        logger.debug("Getting facilities")
+        session = self._ensure_session()
+        
+        params = {
+            "facility_code": facility_code,
+            "status_id": [s.value for s in status_id] if status_id else None,
+            "fueltech_id": [f.value for f in fueltech_id] if fueltech_id else None,
+            "network_id": network_id,
+            "network_region": network_region,
+        }
+        params = self._clean_params(params)
+        logger.debug("Request parameters: %s", params)
+
+        url = self._build_url("/facilities/")
+        response = session.get(url, params=params)
+        data = self._handle_response(response)
+        return FacilityResponse.model_validate(data)
+
+    def get_network_data(
+        self,
+        network_code: NetworkCode,
+        metrics: list[DataMetric],
+        interval: DataInterval | None = None,
+        date_start: datetime | None = None,
+        date_end: datetime | None = None,
+        primary_grouping: DataPrimaryGrouping | None = None,
+        secondary_grouping: DataSecondaryGrouping | None = None,
+    ) -> TimeSeriesResponse:
+        """Get network data for specified metrics."""
+        logger.debug(
+            "Getting network data for %s (metrics: %s, interval: %s)",
+            network_code,
+            metrics,
+            interval,
+        )
+        session = self._ensure_session()
+        
+        params = {
+            "metrics": [m.value for m in metrics],
+            "interval": interval,
+            "date_start": date_start.isoformat() if date_start else None,
+            "date_end": date_end.isoformat() if date_end else None,
+            "primary_grouping": primary_grouping,
+            "secondary_grouping": secondary_grouping,
+        }
+        params = self._clean_params(params)
+        logger.debug("Request parameters: %s", params)
+
+        url = self._build_url(f"/data/network/{network_code}")
+        response = session.get(url, params=params)
+        data = self._handle_response(response)
+        return TimeSeriesResponse.model_validate(data)
+
+    def get_facility_data(
+        self,
+        network_code: NetworkCode,
+        facility_code: str | list[str],
+        metrics: list[DataMetric],
+        interval: DataInterval | None = None,
+        date_start: datetime | None = None,
+        date_end: datetime | None = None,
+    ) -> TimeSeriesResponse:
+        """Get facility data for specified metrics."""
+        logger.debug(
+            "Getting facility data for %s/%s (metrics: %s, interval: %s)",
+            network_code,
+            facility_code,
+            metrics,
+            interval,
+        )
+        session = self._ensure_session()
+        
+        params = {
+            "facility_code": facility_code,
+            "metrics": [m.value for m in metrics],
+            "interval": interval,
+            "date_start": date_start.isoformat() if date_start else None,
+            "date_end": date_end.isoformat() if date_end else None,
+        }
+        params = self._clean_params(params)
+        logger.debug("Request parameters: %s", params)
+
+        url = self._build_url(f"/data/facilities/{network_code}")
+        response = session.get(url, params=params)
+        data = self._handle_response(response)
+        return TimeSeriesResponse.model_validate(data)
+
+    def get_market(
+        self,
+        network_code: NetworkCode,
+        metrics: list[MarketMetric],
+        interval: DataInterval | None = None,
+        date_start: datetime | None = None,
+        date_end: datetime | None = None,
+        primary_grouping: DataPrimaryGrouping | None = None,
+        network_region: str | None = None,
+    ) -> TimeSeriesResponse:
+        """Get market data for specified metrics."""
+        logger.debug(
+            "Getting market data for %s (metrics: %s, interval: %s, region: %s)",
+            network_code,
+            metrics,
+            interval,
+            network_region,
+        )
+        session = self._ensure_session()
+        
+        params = {
+            "metrics": [m.value for m in metrics],
+            "interval": interval,
+            "date_start": date_start.isoformat() if date_start else None,
+            "date_end": date_end.isoformat() if date_end else None,
+            "primary_grouping": primary_grouping,
+            "network_region": network_region,
+        }
+        params = self._clean_params(params)
+        logger.debug("Request parameters: %s", params)
+
+        url = self._build_url(f"/market/network/{network_code}")
+        response = session.get(url, params=params)
+        data = self._handle_response(response)
+        return TimeSeriesResponse.model_validate(data)
+
+    def get_current_user(self) -> OpennemUserResponse:
+        """Get current user information."""
+        logger.debug("Getting current user information")
+        session = self._ensure_session()
+        
+        url = self._build_url("/me")
+        response = session.get(url)
+        data = self._handle_response(response)
+        return OpennemUserResponse.model_validate(data)
+
+    def close(self) -> None:
+        """Close the underlying HTTP client session."""
+        if self._session:
+            logger.debug("Closing requests session")
+            self._session.close()
+            self._session = None
+
+    def __enter__(self) -> "OEClient":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        """Ensure session is closed when object is garbage collected."""
+        self.close()
+
+
+class LegacyOEClient(BaseOEClient):
+    """
+    Legacy synchronous client for the OpenElectricity API.
 
     Note: This client uses aiohttp with asyncio.run() internally to maintain
     API consistency while using the same underlying HTTP client as the async version.
+    This is kept for backward compatibility but is not recommended for new code.
     """
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         super().__init__(api_key, base_url)
         self._session: ClientSession | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
-        logger.debug("Initialized synchronous client")
+        logger.debug("Initialized legacy synchronous client")
 
     def _ensure_session(self) -> None:
         """Ensure session and event loop are initialized."""
@@ -346,7 +595,7 @@ class OEClient(BaseOEClient):
 
             asyncio.run(_close())
 
-    def __enter__(self) -> "OEClient":
+    def __enter__(self) -> "LegacyOEClient":
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -486,13 +735,15 @@ class AsyncOEClient(BaseOEClient):
         date_start: datetime | None = None,
         date_end: datetime | None = None,
         primary_grouping: DataPrimaryGrouping | None = None,
+        network_region: str | None = None,
     ) -> TimeSeriesResponse:
         """Get market data for specified metrics."""
         logger.debug(
-            "Getting market data for %s (metrics: %s, interval: %s)",
+            "Getting market data for %s (metrics: %s, interval: %s, region: %s)",
             network_code,
             metrics,
             interval,
+            network_region,
         )
         await self._ensure_client()
         params = {
@@ -501,6 +752,7 @@ class AsyncOEClient(BaseOEClient):
             "date_start": date_start.isoformat() if date_start else None,
             "date_end": date_end.isoformat() if date_end else None,
             "primary_grouping": primary_grouping,
+            "network_region": network_region,
         }
         # Remove None values
         params = {k: v for k, v in params.items() if v is not None}
@@ -530,3 +782,4 @@ class AsyncOEClient(BaseOEClient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.close()
+
