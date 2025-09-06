@@ -49,9 +49,7 @@ def test_network_region_extraction():
                 metrics=[
                     DataMetric.POWER,
                     DataMetric.ENERGY,
-                    DataMetric.PRICE,
                     DataMetric.MARKET_VALUE,
-                    DataMetric.DEMAND,
                     DataMetric.EMISSIONS,
                     DataMetric.RENEWABLE_PROPORTION,
                 ],

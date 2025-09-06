@@ -8,7 +8,7 @@ import re
 from collections.abc import Sequence
 from datetime import datetime, timedelta
 import datetime as dt
-from typing import Any
+from typing import Any, Optional, TYPE_CHECKING
 
 import warnings
 from pydantic import BaseModel, Field, RootModel, ValidationError
@@ -16,6 +16,11 @@ from pydantic_core import ErrorDetails
 
 from openelectricity.models.base import APIResponse
 from openelectricity.types import DataInterval, NetworkCode
+
+if TYPE_CHECKING:
+    import pandas as pd
+    import polars as pl
+    from pyspark.sql import DataFrame
 
 
 def handle_validation_errors(e: ValidationError) -> None:
@@ -198,7 +203,7 @@ class NetworkTimeSeries(BaseModel):
 class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
     """Response model for time series data."""
 
-    data: Sequence[NetworkTimeSeries]
+    data: Sequence[NetworkTimeSeries] = Field(default_factory=list)
 
     @classmethod
     def model_validate(cls, obj, *args, **kwargs):
