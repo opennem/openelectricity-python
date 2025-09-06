@@ -38,8 +38,11 @@ analysis = [
     "pandas>=2.3.2",
     "pyarrow>=15.0.0",  # Required for better performance with Polars
     "rich>=13.7.0",     # Required for formatted table output
-    "databricks-sdk>=0.64.0", 
-    "pyspark>=4.0.0"
+]
+pyspark = [
+    "pandas>=2.3.2",
+    "pyspark>=4.0.0",
+    "databricks-sdk>=0.64.0",
 ]
 
 [build-system]
@@ -82,7 +85,7 @@ docstring-code-format = true
 docstring-code-line-length = 100
 
 [tool.pyright]
-include = ["opennem/**/*.py"]
+include = ["openelectricity/**/*.py"]
 python_version = "3.12"
 reportMissingImports = "error"
 reportMissingTypeStubs = false
