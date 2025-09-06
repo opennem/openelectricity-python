@@ -39,9 +39,9 @@ analysis = [
     "pyarrow>=15.0.0",  # Required for better performance with Polars
     "rich>=13.7.0",     # Required for formatted table output
 ]
-pyspark = [
+databricks = [
     "pandas>=2.3.2",
-    "pyspark>=4.0.0",
+    "pyspark>=4.0.1",
     "databricks-sdk>=0.64.0",
 ]
 

@@ -1399,17 +1399,17 @@ analysis = [
     { name = "pyarrow" },
     { name = "rich" },
 ]
+databricks = [
+    { name = "databricks-sdk" },
+    { name = "pandas" },
+    { name = "pyspark" },
+]
 dev = [
     { name = "build" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "ruff" },
-]
-pyspark = [
-    { name = "databricks-sdk" },
-    { name = "pandas" },
-    { name = "pyspark" },
 ]
 
 [package.dev-dependencies]
@@ -1427,15 +1427,15 @@ dev = [
 requires-dist = [
     { name = "aiohttp", extras = ["speedups"], specifier = ">=3.11.12" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.3" },
-    { name = "databricks-sdk", marker = "extra == 'pyspark'", specifier = ">=0.64.0" },
+    { name = "databricks-sdk", marker = "extra == 'databricks'", specifier = ">=0.64.0" },
     { name = "matplotlib", marker = "extra == 'analysis'", specifier = ">=3.10.5" },
     { name = "pandas", marker = "extra == 'analysis'", specifier = ">=2.3.2" },
-    { name = "pandas", marker = "extra == 'pyspark'", specifier = ">=2.3.2" },
+    { name = "pandas", marker = "extra == 'databricks'", specifier = ">=2.3.2" },
     { name = "polars", marker = "extra == 'analysis'", specifier = ">=0.20.5" },
     { name = "pyarrow", marker = "extra == 'analysis'", specifier = ">=15.0.0" },
     { name = "pydantic", specifier = ">=2.10.3" },
     { name = "pydantic-settings", specifier = ">=2.7.1" },
-    { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=4.0.0" },
+    { name = "pyspark", marker = "extra == 'databricks'", specifier = ">=4.0.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
@@ -1443,7 +1443,7 @@ requires-dist = [
     { name = "rich", marker = "extra == 'analysis'", specifier = ">=13.7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.3" },
 ]
-provides-extras = ["analysis", "dev", "pyspark"]
+provides-extras = ["analysis", "databricks", "dev"]
 
 [package.metadata.requires-dev]
 dev = [
