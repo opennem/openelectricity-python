@@ -4,13 +4,23 @@ Test script to examine timezone handling in PySpark conversion.
 """
 
 import os
+import pytest
 from dotenv import load_dotenv
+
+# Check if PySpark is available
+try:
+    import pyspark
+    PYSPARK_AVAILABLE = True
+except ImportError:
+    PYSPARK_AVAILABLE = False
+
 from openelectricity import OEClient
 
 # Load environment variables
 load_dotenv()
 
 
+@pytest.mark.skipif(not PYSPARK_AVAILABLE, reason="PySpark not available")
 def test_timezone_handling():
     """Test how timezones are handled in PySpark conversion."""
     print("🕐 Testing Timezone Handling in PySpark Conversion")

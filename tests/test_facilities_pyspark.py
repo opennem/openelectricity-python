@@ -6,6 +6,14 @@ This module contains tests for converting facility data to PySpark DataFrames.
 
 import os
 import pytest
+
+# Check if PySpark is available
+try:
+    import pyspark
+    PYSPARK_AVAILABLE = True
+except ImportError:
+    PYSPARK_AVAILABLE = False
+
 from openelectricity import OEClient
 
 
@@ -18,7 +26,7 @@ def facilities_response(openelectricity_client):
         pytest.skip(f"API call failed: {e}")
 
 
-@pytest.mark.skipif(not pytest.importorskip("pyspark", reason="PySpark not available"), reason="PySpark not available")
+@pytest.mark.skipif(not PYSPARK_AVAILABLE, reason="PySpark not available")
 def test_facilities_pyspark_conversion(facilities_response):
     """Test that facilities can be converted to PySpark DataFrame."""
     # Test PySpark conversion
@@ -37,7 +45,7 @@ def test_facilities_pyspark_conversion(facilities_response):
     assert len(found_columns) > 0, f"Should have at least some essential columns. Found: {found_columns}"
 
 
-@pytest.mark.skipif(not pytest.importorskip("pyspark", reason="PySpark not available"), reason="PySpark not available")
+@pytest.mark.skipif(not PYSPARK_AVAILABLE, reason="PySpark not available")
 def test_facilities_pyspark_schema(facilities_response):
     """Test that PySpark DataFrame has correct schema."""
     from pyspark.sql.types import StringType, DoubleType
@@ -65,7 +73,7 @@ def test_facilities_pyspark_schema(facilities_response):
             )
 
 
-@pytest.mark.skipif(not pytest.importorskip("pyspark", reason="PySpark not available"), reason="PySpark not available")
+@pytest.mark.skipif(not PYSPARK_AVAILABLE, reason="PySpark not available")
 def test_facilities_pyspark_operations(facilities_response):
     """Test that PySpark operations work on facilities DataFrame."""
     spark_df = facilities_response.to_pyspark()
@@ -88,7 +96,7 @@ def test_facilities_pyspark_operations(facilities_response):
         assert nem_count > 0, "Should have NEM facilities"
 
 
-@pytest.mark.skipif(not pytest.importorskip("pyspark", reason="PySpark not available"), reason="PySpark not available")
+@pytest.mark.skipif(not PYSPARK_AVAILABLE, reason="PySpark not available")
 def test_facilities_pyspark_data_integrity(facilities_response):
     """Test data integrity between pandas and PySpark DataFrames."""
     # Get pandas DataFrame for comparison

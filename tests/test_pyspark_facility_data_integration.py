@@ -10,6 +10,14 @@ import os
 import logging
 import pytest
 from datetime import datetime, timedelta, timezone
+
+# Check if PySpark is available
+try:
+    import pyspark
+    PYSPARK_AVAILABLE = True
+except ImportError:
+    PYSPARK_AVAILABLE = False
+
 from openelectricity import OEClient
 from openelectricity.types import DataMetric
 
@@ -367,6 +375,7 @@ class TestPySparkFacilityDataIntegration:
 
 
 # Integration test runner
+@pytest.mark.skipif(not PYSPARK_AVAILABLE, reason="PySpark not available")
 def test_full_integration(openelectricity_client, test_parameters):
     """Run full integration test with the specified parameters."""
     try:
