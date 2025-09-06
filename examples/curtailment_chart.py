@@ -50,7 +50,7 @@ def fetch_curtailment_energy(client: OEClient, days_back: int = 30) -> pd.DataFr
         network_code="NEM",
         metrics=[
             MarketMetric.CURTAILMENT_ENERGY,
-            MarketMetric.CURTAILMENT_SOLAR_ENERGY,
+            MarketMetric.CURTAILMENT_SOLAR_UTILITY_ENERGY,
             MarketMetric.CURTAILMENT_WIND_ENERGY
         ],
         interval="1d",
@@ -109,7 +109,7 @@ def create_stacked_bar_chart(df: pd.DataFrame):
     
     if total_df.empty:
         # Fall back to calculating from solar + wind if total not available
-        solar_df = df[df["metric"] == "curtailment_solar_energy"]
+        solar_df = df[df["metric"] == "curtailment_solar_utility_energy"]
         wind_df = df[df["metric"] == "curtailment_wind_energy"]
         
         # Combine solar and wind data
@@ -198,7 +198,7 @@ def create_split_chart(df: pd.DataFrame):
         return
     
     # Separate solar and wind data
-    solar_df = df[df["metric"] == "curtailment_solar_energy"]
+    solar_df = df[df["metric"] == "curtailment_solar_utility_energy"]
     wind_df = df[df["metric"] == "curtailment_wind_energy"]
     
     # Create subplots
@@ -305,7 +305,7 @@ def print_summary_statistics(df: pd.DataFrame):
     print("=" * 60)
     
     # Overall statistics by type
-    solar_total = df[df["metric"] == "curtailment_solar_energy"]["value"].sum()
+    solar_total = df[df["metric"] == "curtailment_solar_utility_energy"]["value"].sum()
     wind_total = df[df["metric"] == "curtailment_wind_energy"]["value"].sum()
     total = df[df["metric"] == "curtailment_energy"]["value"].sum()
     
@@ -327,7 +327,7 @@ def print_summary_statistics(df: pd.DataFrame):
     
     for region in regions:
         region_df = df[df["region"] == region]
-        solar = region_df[region_df["metric"] == "curtailment_solar_energy"]["value"].sum()
+        solar = region_df[region_df["metric"] == "curtailment_solar_utility_energy"]["value"].sum()
         wind = region_df[region_df["metric"] == "curtailment_wind_energy"]["value"].sum()
         total_region = region_df[region_df["metric"] == "curtailment_energy"]["value"].sum()
         
@@ -350,7 +350,7 @@ def print_summary_statistics(df: pd.DataFrame):
     daily_totals = df[df["metric"] == "curtailment_energy"].groupby("date")["value"].sum()
     if daily_totals.empty:
         # Calculate from solar + wind
-        solar_daily = df[df["metric"] == "curtailment_solar_energy"].groupby("date")["value"].sum()
+        solar_daily = df[df["metric"] == "curtailment_solar_utility_energy"].groupby("date")["value"].sum()
         wind_daily = df[df["metric"] == "curtailment_wind_energy"].groupby("date")["value"].sum()
         daily_totals = solar_daily.add(wind_daily, fill_value=0)
     

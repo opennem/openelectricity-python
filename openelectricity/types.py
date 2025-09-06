@@ -31,6 +31,7 @@ class DataMetric(str, Enum):
     EMISSIONS = "emissions"
     MARKET_VALUE = "market_value"
     RENEWABLE_PROPORTION = "renewable_proportion"
+    STORAGE_BATTERY = "storage_battery"
 
 
 class MarketMetric(str, Enum):
@@ -41,8 +42,8 @@ class MarketMetric(str, Enum):
     DEMAND_ENERGY = "demand_energy"
     CURTAILMENT = "curtailment"
     CURTAILMENT_ENERGY = "curtailment_energy"
-    CURTAILMENT_SOLAR = "curtailment_solar"
-    CURTAILMENT_SOLAR_ENERGY = "curtailment_solar_energy"
+    CURTAILMENT_SOLAR_UTILITY = "curtailment_solar_utility"
+    CURTAILMENT_SOLAR_UTILITY_ENERGY = "curtailment_solar_utility_energy"
     CURTAILMENT_WIND = "curtailment_wind"
     CURTAILMENT_WIND_ENERGY = "curtailment_wind_energy"
 
