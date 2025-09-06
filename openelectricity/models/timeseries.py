@@ -75,19 +75,16 @@ def filter_problematic_fields(obj, errors):
 
 def fix_none_values_in_data(obj):
     """
-    Recursively fix None values in data arrays by converting them to 0.0.
-    This is specifically for handling None values in time series data points.
+    Recursively preserve None values in data arrays.
+    Let users decide how to handle missing data rather than guessing.
     """
     if isinstance(obj, dict):
         return {k: fix_none_values_in_data(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [fix_none_values_in_data(item) for item in obj]
     elif isinstance(obj, (list, tuple)) and len(obj) == 2:
-        # This might be a time series data point tuple
-        if obj[1] is None:
-            return (obj[0], 0.0)
-        else:
-            return obj
+        # This might be a time series data point tuple - keep None as-is
+        return obj
     else:
         return obj
 
