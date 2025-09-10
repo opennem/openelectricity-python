@@ -21,6 +21,7 @@ from openelectricity.types import (
     DataMetric,
     DataPrimaryGrouping,
     DataSecondaryGrouping,
+    FueltechGroupType,
     MarketMetric,
     NetworkCode,
     UnitFueltechType,
@@ -358,7 +359,7 @@ class LegacyOEClient(BaseOEClient):
             except Exception:
                 detail = response.reason
             logger.error("API error: %s - %s", response.status, detail)
-            raise APIError(response.status, detail)
+            raise APIError(response.status, detail or "")
 
         logger.debug("Received successful response: %s", response.status)
         return await response.json()
@@ -396,10 +397,30 @@ class LegacyOEClient(BaseOEClient):
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
         date_end: datetime | None = None,
+        network_region: str | None = None,
+        fueltech: list[UnitFueltechType] | None = None,
+        fueltech_group: list[FueltechGroupType] | None = None,
         primary_grouping: DataPrimaryGrouping | None = None,
         secondary_grouping: DataSecondaryGrouping | None = None,
     ) -> TimeSeriesResponse:
-        """Async implementation of get_network_data."""
+        """
+        Async implementation of get_network_data.
+
+        Args:
+            network_code: The network to get data for
+            metrics: List of metrics to query (e.g. energy, power, price)
+            interval: The time interval to aggregate by
+            date_start: Start time for the query
+            date_end: End time for the query
+            network_region: Network region to get data for
+            fueltech: List of individual fuel technologies to filter by (UnitFueltechType enum values)
+            fueltech_group: List of fuel technology groups to filter by (FueltechGroupType enum values)
+            primary_grouping: Primary grouping to apply
+            secondary_grouping: Optional secondary grouping to apply
+
+        Returns:
+            TimeSeriesResponse: Time series data response containing a list of TimeSeries objects
+        """
         logger.debug(
             "Getting network data for %s (metrics: %s, interval: %s)",
             network_code,
@@ -412,6 +433,9 @@ class LegacyOEClient(BaseOEClient):
             "interval": interval,
             "date_start": date_start.isoformat() if date_start else None,
             "date_end": date_end.isoformat() if date_end else None,
+            "network_region": network_region,
+            "fueltech": [f.value for f in fueltech] if fueltech else None,
+            "fueltech_group": [fg.value for fg in fueltech_group] if fueltech_group else None,
             "primary_grouping": primary_grouping,
             "secondary_grouping": secondary_grouping,
         }
@@ -523,16 +547,45 @@ class LegacyOEClient(BaseOEClient):
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
         date_end: datetime | None = None,
+        network_region: str | None = None,
+        fueltech: list[UnitFueltechType] | None = None,
+        fueltech_group: list[FueltechGroupType] | None = None,
         primary_grouping: DataPrimaryGrouping | None = None,
         secondary_grouping: DataSecondaryGrouping | None = None,
     ) -> TimeSeriesResponse:
-        """Get network data for specified metrics."""
+        """
+        Get network data for specified metrics.
+
+        Args:
+            network_code: The network to get data for
+            metrics: List of metrics to query (e.g. energy, power, price)
+            interval: The time interval to aggregate by
+            date_start: Start time for the query
+            date_end: End time for the query
+            network_region: Network region to get data for
+            fueltech: List of individual fuel technologies to filter by (UnitFueltechType enum values)
+            fueltech_group: List of fuel technology groups to filter by (FueltechGroupType enum values)
+            primary_grouping: Primary grouping to apply
+            secondary_grouping: Optional secondary grouping to apply
+
+        Returns:
+            TimeSeriesResponse: Time series data response containing a list of TimeSeries objects
+        """
 
         async def _run():
             async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
                 self._session = session
                 return await self._async_get_network_data(
-                    network_code, metrics, interval, date_start, date_end, primary_grouping, secondary_grouping
+                    network_code,
+                    metrics,
+                    interval,
+                    date_start,
+                    date_end,
+                    network_region,
+                    fueltech,
+                    fueltech_group,
+                    primary_grouping,
+                    secondary_grouping,
                 )
 
         return asyncio.run(_run())
@@ -667,10 +720,30 @@ class AsyncOEClient(BaseOEClient):
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
         date_end: datetime | None = None,
+        network_region: str | None = None,
+        fueltech: list[UnitFueltechType] | None = None,
+        fueltech_group: list[FueltechGroupType] | None = None,
         primary_grouping: DataPrimaryGrouping | None = None,
         secondary_grouping: DataSecondaryGrouping | None = None,
     ) -> TimeSeriesResponse:
-        """Get network data for specified metrics."""
+        """
+        Get network data for specified metrics.
+
+        Args:
+            network_code: The network to get data for
+            metrics: List of metrics to query (e.g. energy, power, price)
+            interval: The time interval to aggregate by
+            date_start: Start time for the query
+            date_end: End time for the query
+            network_region: Network region to get data for
+            fueltech: List of individual fuel technologies to filter by (UnitFueltechType enum values)
+            fueltech_group: List of fuel technology groups to filter by (FueltechGroupType enum values)
+            primary_grouping: Primary grouping to apply
+            secondary_grouping: Optional secondary grouping to apply
+
+        Returns:
+            TimeSeriesResponse: Time series data response containing a list of TimeSeries objects
+        """
         logger.debug(
             "Getting network data for %s (metrics: %s, interval: %s)",
             network_code,
@@ -683,6 +756,9 @@ class AsyncOEClient(BaseOEClient):
             "interval": interval,
             "date_start": date_start.isoformat() if date_start else None,
             "date_end": date_end.isoformat() if date_end else None,
+            "network_region": network_region,
+            "fueltech": [f.value for f in fueltech] if fueltech else None,
+            "fueltech_group": [fg.value for fg in fueltech_group] if fueltech_group else None,
             "primary_grouping": primary_grouping,
             "secondary_grouping": secondary_grouping,
         }
