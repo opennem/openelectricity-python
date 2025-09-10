@@ -89,6 +89,20 @@ class UnitStatusType(str, Enum):
     RETIRED = "retired"
 
 
+class FueltechGroupType(str, Enum):
+    """Types of fuel technology groups."""
+
+    SOLAR = "solar"
+    WIND = "wind"
+    HYDRO = "hydro"
+    BATTERY = "battery"
+    GAS = "gas"
+    COAL = "coal"
+    RENEWABLE = "renewable"
+    FOSSIL = "fossil"
+    OTHER = "other"
+
+
 class OpenNEMRoles(str, Enum):
     """User roles in the OpenNEM system."""
 
@@ -138,6 +152,6 @@ VALID_PRIMARY_GROUPINGS = ["network", "network_region"]
 VALID_SECONDARY_GROUPINGS = ["fueltech", "fueltech_group", "status", "renewable"]
 
 # Type aliases for documentation
-type Metric = str  # Union of DataMetric and MarketMetric values
-type TimeSeriesResult = dict[str, Any]  # Matches ITimeSeriesResult
-type NetworkTimeSeries = dict[str, Any]  # Matches INetworkTimeSeries
+Metric = str  # Union of DataMetric and MarketMetric values
+TimeSeriesResult = dict[str, Any]  # Matches ITimeSeriesResult
+NetworkTimeSeries = dict[str, Any]  # Matches INetworkTimeSeries
