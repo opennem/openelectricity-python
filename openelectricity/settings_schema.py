@@ -6,9 +6,9 @@ class Settings(BaseSettings):
     model_config = ConfigDict(env_file=".env")
 
     env: str = Field(default="development", validation_alias=AliasChoices("ENV"))
-    api_key: str = Field(..., validation_alias=AliasChoices("OPENELECTRICITY_API_KEY"))
+    api_key: str = Field(default="", validation_alias=AliasChoices("OPENELECTRICITY_API_KEY"))
     base_url: str = Field(
-        default="https://api.openelectricity.org.au/v4/",
+        default="https://api.openelectricity.org.au",
         validation_alias=AliasChoices("OPENELECTRICITY_API_URL"),
     )
 
