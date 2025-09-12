@@ -5,12 +5,35 @@ This package provides a Python client for interacting with the OpenElectricity A
 """
 
 from openelectricity.client import AsyncOEClient, OEClient
+from openelectricity.types import (
+    DataInterval,
+    DataMetric,
+    DataPrimaryGrouping,
+    DataSecondaryGrouping,
+    FueltechGroupType,
+    MarketMetric,
+    NetworkCode,
+    UnitFueltechType,
+    UnitStatusType,
+)
 
 __name__ = "openelectricity"
 
 __version__ = "0.9.0"
 
-__all__ = ["OEClient", "AsyncOEClient"]
+__all__ = [
+    "OEClient",
+    "AsyncOEClient",
+    "DataMetric",
+    "UnitFueltechType",
+    "UnitStatusType",
+    "MarketMetric",
+    "NetworkCode",
+    "DataInterval",
+    "DataPrimaryGrouping",
+    "DataSecondaryGrouping",
+    "FueltechGroupType",
+]
 
 # Optional imports for styling (won't fail if dependencies are missing)
 # We don't actually import the module here, just expose it conditionally
