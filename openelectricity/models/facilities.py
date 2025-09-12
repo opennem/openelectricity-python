@@ -18,7 +18,7 @@ class FacilityUnit(BaseModel):
     code: str = Field(..., description="Unit code")
     fueltech_id: UnitFueltechType = Field(..., description="Fuel technology type")
     status_id: UnitStatusType = Field(..., description="Unit status")
-    capacity_registered: float = Field(..., description="Registered capacity in MW")
+    capacity_registered: float | None = Field(None, description="Registered capacity in MW")
     capacity_maximum: float | None = Field(None, description="Maximum capacity in MW")
     capacity_storage: float | None = Field(None, description="Storage capacity in MWh")
     emissions_factor_co2: float | None = Field(None, description="CO2 emissions factor")
