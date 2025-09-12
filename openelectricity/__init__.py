@@ -33,6 +33,7 @@ __all__ = [
     "DataPrimaryGrouping",
     "DataSecondaryGrouping",
     "FueltechGroupType",
+    "UnitFueltechType",
 ]
 
 # Optional imports for styling (won't fail if dependencies are missing)
