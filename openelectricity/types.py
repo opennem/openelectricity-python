@@ -89,6 +89,15 @@ class UnitStatusType(str, Enum):
     RETIRED = "retired"
 
 
+class UnitDateSpecificity(str, Enum):
+    """Date specificity for unit dates."""
+
+    YEAR = "year"
+    MONTH = "month"
+    QUARTER = "quarter"
+    DAY = "day"
+
+
 class FueltechGroupType(str, Enum):
     """Types of fuel technology groups."""
 

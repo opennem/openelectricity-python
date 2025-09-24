@@ -9,7 +9,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from openelectricity.models.base import APIResponse
-from openelectricity.types import NetworkCode, UnitFueltechType, UnitStatusType
+from openelectricity.types import NetworkCode, UnitDateSpecificity, UnitFueltechType, UnitStatusType
 
 
 class FacilityUnit(BaseModel):
@@ -25,6 +25,27 @@ class FacilityUnit(BaseModel):
     data_first_seen: datetime | None = Field(None, description="When data was first seen for this unit")
     data_last_seen: datetime | None = Field(None, description="When data was last seen for this unit")
     dispatch_type: str = Field(..., description="Dispatch type")
+    commencement_date: datetime | None = Field(None, description="Commencement date")
+    commencement_date_specificity: UnitDateSpecificity | None = Field(None, description="Commencement date specificity")
+    commencement_date_display: str | None = Field(None, description="Commencement date formatted for display")
+    closure_date: datetime | None = Field(None, description="Closure date")
+    closure_date_specificity: UnitDateSpecificity | None = Field(None, description="Closure date specificity")
+    closure_date_display: str | None = Field(None, description="Closure date formatted for display")
+    expected_operation_date: datetime | None = Field(None, description="Expected operation date")
+    expected_operation_date_specificity: UnitDateSpecificity | None = Field(None, description="Expected operation date specificity")
+    expected_operation_date_display: str | None = Field(None, description="Expected operation date formatted for display")
+    expected_closure_date: datetime | None = Field(None, description="Expected closure date")
+    expected_closure_date_specificity: UnitDateSpecificity | None = Field(None, description="Expected closure date specificity")
+    expected_closure_date_display: str | None = Field(None, description="Expected closure date formatted for display")
+    construction_start_date: datetime | None = Field(None, description="Construction start date")
+    construction_start_date_specificity: UnitDateSpecificity | None = Field(None, description="Construction start date specificity")
+    construction_start_date_display: str | None = Field(None, description="Construction start date formatted for display")
+    project_approval_date: datetime | None = Field(None, description="Project approval date")
+    project_approval_date_specificity: UnitDateSpecificity | None = Field(None, description="Project approval date specificity")
+    project_approval_date_display: str | None = Field(None, description="Project approval date formatted for display")
+    project_lodgement_date: datetime | None = Field(None, description="Project lodgement date")
+    created_at: datetime | None = Field(None, description="Creation timestamp")
+    updated_at: datetime | None = Field(None, description="Last update timestamp")
 
 
 class FacilityLocation(BaseModel):
@@ -45,6 +66,8 @@ class Facility(BaseModel):
     npi_id: str | None = Field(None, description="NPI facility ID")
     location: FacilityLocation | None = Field(None, description="Facility location coordinates")
     units: list[FacilityUnit] = Field(..., description="Units within the facility")
+    created_at: datetime | None = Field(None, description="Creation timestamp")
+    updated_at: datetime | None = Field(None, description="Last update timestamp")
 
 
 class FacilityResponse(APIResponse[Facility]):
