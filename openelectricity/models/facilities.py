@@ -32,13 +32,17 @@ class FacilityUnit(BaseModel):
     closure_date_specificity: UnitDateSpecificity | None = Field(None, description="Closure date specificity")
     closure_date_display: str | None = Field(None, description="Closure date formatted for display")
     expected_operation_date: datetime | None = Field(None, description="Expected operation date")
-    expected_operation_date_specificity: UnitDateSpecificity | None = Field(None, description="Expected operation date specificity")
+    expected_operation_date_specificity: UnitDateSpecificity | None = Field(
+        None, description="Expected operation date specificity"
+    )
     expected_operation_date_display: str | None = Field(None, description="Expected operation date formatted for display")
     expected_closure_date: datetime | None = Field(None, description="Expected closure date")
     expected_closure_date_specificity: UnitDateSpecificity | None = Field(None, description="Expected closure date specificity")
     expected_closure_date_display: str | None = Field(None, description="Expected closure date formatted for display")
     construction_start_date: datetime | None = Field(None, description="Construction start date")
-    construction_start_date_specificity: UnitDateSpecificity | None = Field(None, description="Construction start date specificity")
+    construction_start_date_specificity: UnitDateSpecificity | None = Field(
+        None, description="Construction start date specificity"
+    )
     construction_start_date_display: str | None = Field(None, description="Construction start date formatted for display")
     project_approval_date: datetime | None = Field(None, description="Project approval date")
     project_approval_date_specificity: UnitDateSpecificity | None = Field(None, description="Project approval date specificity")
