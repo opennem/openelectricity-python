@@ -1284,7 +1284,6 @@ dependencies = [
 analysis = [
     { name = "polars" },
     { name = "pyarrow" },
-    { name = "rich" },
 ]
 dev = [
     { name = "build" },
@@ -1292,6 +1291,7 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "python-dotenv" },
+    { name = "rich" },
     { name = "ruff" },
 ]
 
@@ -1318,7 +1318,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
     { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "rich", marker = "extra == 'analysis'", specifier = ">=13.7.0" },
+    { name = "rich", marker = "extra == 'dev'", specifier = ">=13.7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.3" },
 ]
 provides-extras = ["analysis", "dev"]
