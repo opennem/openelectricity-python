@@ -1,10 +1,8 @@
-from pydantic import AliasChoices, ConfigDict, Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    model_config = ConfigDict(env_file=".env")
-
     env: str = Field(default="development", validation_alias=AliasChoices("ENV"))
     api_key: str = Field(..., validation_alias=AliasChoices("OPENELECTRICITY_API_KEY"))
     base_url: str = Field(
