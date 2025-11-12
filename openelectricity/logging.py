@@ -7,9 +7,8 @@ environments will only show info and above.
 """
 
 import logging
+import os
 import sys
-
-from openelectricity.settings_schema import settings
 
 
 def configure_logging() -> None:
@@ -20,7 +19,9 @@ def configure_logging() -> None:
     root_logger.handlers = []
 
     # Set level based on environment
-    level = logging.DEBUG if settings.is_development else logging.INFO
+    env = os.getenv("ENV", "development").lower()
+    is_development = env in ["development", "dev"]
+    level = logging.DEBUG if is_development else logging.INFO
     root_logger.setLevel(level)
 
     # Create console handler

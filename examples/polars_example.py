@@ -14,9 +14,11 @@ Required Dependencies:
     polars: Data analysis library (install with: uv add "openelectricity[analysis]")
 """
 
+import os
 import sys
 from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
 from rich.console import Console
 
 try:
@@ -27,8 +29,9 @@ except ImportError:
     sys.exit(1)
 
 from openelectricity import OEClient
-from openelectricity.settings_schema import settings
 from openelectricity.types import DataMetric, UnitFueltechType, UnitStatusType
+
+load_dotenv()
 
 
 def main():
@@ -37,9 +40,10 @@ def main():
 
     # Print settings for debugging
     console.print("\n[bold blue]API Settings:[/bold blue]")
-    console.print(f"API URL: {settings.base_url}")
-    console.print(f"Environment: {settings.env}")
-    console.print(f"API Key: {settings.api_key[:8]}...")
+    console.print(f"API URL: {os.getenv('OPENELECTRICITY_API_URL', 'https://api.openelectricity.org.au/v4/')}")
+    console.print(f"Environment: {os.getenv('ENV', 'development')}")
+    api_key = os.getenv("OPENELECTRICITY_API_KEY", "")
+    console.print(f"API Key: {api_key[:8] if api_key else 'Not set'}...")
 
     try:
         # Calculate date range for last week
@@ -73,7 +77,6 @@ def main():
         # Convert to Polars DataFrame
         console.print("\n[blue]Converting to Polars DataFrame...[/blue]")
         df = response.to_polars()
-        units = response.get_metric_units()
 
         # Print basic information
         console.print("\n[green]DataFrame Info:[/green]")
