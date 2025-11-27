@@ -34,6 +34,10 @@ check:
 	$(pyright)
 
 
+.PHONY: install
+install:
+	uv sync --all-extras
+
 .PHONY: version
 version:
 	@if ! echo "major minor patch stable alpha beta rc post dev" | grep -w "$(BUMP)" > /dev/null; then \
