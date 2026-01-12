@@ -34,7 +34,14 @@ dev = [
 ]
 analysis = [
     "polars>=0.20.5",
+    "matplotlib>=3.10.5",
+    "pandas>=2.3.2",
     "pyarrow>=15.0.0",  # Required for better performance with Polars
+]
+databricks = [
+    "pandas>=2.3.2",
+    "pyspark>=4.0.1",
+    "databricks-sdk>=0.64.0",
 ]
 
 [build-system]
@@ -77,7 +84,7 @@ docstring-code-format = true
 docstring-code-line-length = 100
 
 [tool.pyright]
-include = ["opennem/**/*.py"]
+include = ["openelectricity/**/*.py"]
 python_version = "3.12"
 reportMissingImports = "error"
 reportMissingTypeStubs = false
@@ -91,6 +98,10 @@ minversion = "6.0"
 addopts = "-ra -q"
 testpaths = [
     "tests",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
 ]
 
 [dependency-groups]

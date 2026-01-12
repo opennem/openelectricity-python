@@ -66,6 +66,19 @@ build:
 	rm -rf dist/
 	uv build
 
+.PHONY: upload-databricks
+upload-databricks: build
+	@WHEEL_FILE=$$(ls -t dist/*.whl | head -1); \
+	CATALOG=$${DATABRICKS_CATALOG:-main}; \
+	SCHEMA=$${DATABRICKS_SCHEMA:-default}; \
+	VOLUME=$${DATABRICKS_VOLUME:-wheels}; \
+	echo "Uploading $$WHEEL_FILE to Databricks volume..."; \
+	uv run python examples/databricks/upload_wheel_to_volume.py \
+		--catalog "$$CATALOG" \
+		--schema "$$SCHEMA" \
+		--volume "$$VOLUME" \
+		--file "$$WHEEL_FILE"
+
 .PHONY: tag
 tag:
 	$(eval CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD))

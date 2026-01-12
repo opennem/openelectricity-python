@@ -2,12 +2,33 @@
 
 import io
 import urllib.request
+from typing import Optional, Tuple
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
-from PIL import Image
+# Optional imports - will be None if not available
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    plt = None
+    Axes = None
+    Figure = None
+    MATPLOTLIB_AVAILABLE = False
+
+try:
+    import seaborn as sns
+    SEABORN_AVAILABLE = True
+except ImportError:
+    sns = None
+    SEABORN_AVAILABLE = False
+
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    Image = None
+    PIL_AVAILABLE = False
 
 # OpenElectricity brand colors
 BRAND_COLORS = {
@@ -96,6 +117,16 @@ _logo_cache = None
 
 def set_openelectricity_style():
     """Apply OpenElectricity styling to matplotlib/seaborn charts."""
+    if not MATPLOTLIB_AVAILABLE:
+        raise ImportError(
+            "Matplotlib is required for chart styling. Install it with: uv add 'openelectricity[analysis]'"
+        )
+    
+    if not SEABORN_AVAILABLE:
+        raise ImportError(
+            "Seaborn is required for chart styling. Install it with: uv add 'openelectricity[analysis]'"
+        )
+    
     # Set seaborn style first
     sns.set_style("whitegrid", CHART_STYLE)
 
@@ -143,9 +174,13 @@ def get_fueltech_palette(fueltechs: list) -> list:
     return [get_fueltech_color(ft) for ft in fueltechs]
 
 
-def download_logo() -> Image.Image | None:
+def download_logo() -> Optional["Image.Image"]:
     """Download and cache the OpenElectricity logo."""
     global _logo_cache
+
+    if not PIL_AVAILABLE:
+        print("Warning: PIL/Pillow not available. Cannot download logo.")
+        return None
 
     if _logo_cache is not None:
         return _logo_cache
@@ -160,7 +195,7 @@ def download_logo() -> Image.Image | None:
         return None
 
 
-def add_watermark(ax: Axes, position: tuple[float, float] = (0.98, 0.02), size: float = 0.15, alpha: float = 0.2) -> None:
+def add_watermark(ax: "Axes", position: Tuple[float, float] = (0.98, 0.02), size: float = 0.15, alpha: float = 0.2) -> None:
     """
     Add OpenElectricity logo watermark to a matplotlib axes.
 
@@ -170,6 +205,10 @@ def add_watermark(ax: Axes, position: tuple[float, float] = (0.98, 0.02), size: 
         size: Size of logo as fraction of figure width (default 0.15)
         alpha: Transparency of logo (0-1, default 0.2 for subtle appearance)
     """
+    if not MATPLOTLIB_AVAILABLE:
+        print("Warning: Matplotlib not available. Cannot add watermark.")
+        return
+    
     logo = download_logo()
     if logo is None:
         return
@@ -210,12 +249,12 @@ def add_watermark(ax: Axes, position: tuple[float, float] = (0.98, 0.02), size: 
 
 
 def format_chart(
-    ax: Axes,
-    title: str | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
+    ax: "Axes",
+    title: Optional[str] = None,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
     add_logo: bool = True,
-    logo_position: tuple[float, float] = (0.98, 0.02),
+    logo_position: Tuple[float, float] = (0.98, 0.02),
     logo_size: float = 0.15,
     logo_alpha: float = 0.2,
 ) -> None:
@@ -254,7 +293,7 @@ def format_chart(
         add_watermark(ax, position=logo_position, size=logo_size, alpha=logo_alpha)
 
 
-def create_styled_figure(figsize: tuple[float, float] = (12, 6), dpi: int = 100) -> tuple[Figure, Axes]:
+def create_styled_figure(figsize: Tuple[float, float] = (12, 6), dpi: int = 100) -> Tuple["Figure", "Axes"]:
     """
     Create a figure with OpenElectricity styling.
 
@@ -265,6 +304,11 @@ def create_styled_figure(figsize: tuple[float, float] = (12, 6), dpi: int = 100)
     Returns:
         Tuple of (figure, axes)
     """
+    if not MATPLOTLIB_AVAILABLE:
+        raise ImportError(
+            "Matplotlib is required for creating styled figures. Install it with: uv add 'openelectricity[analysis]'"
+        )
+    
     set_openelectricity_style()
     fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
     fig.patch.set_facecolor(BRAND_COLORS["background"])
