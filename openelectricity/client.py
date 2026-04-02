@@ -202,24 +202,26 @@ class OEClient(BaseOEClient):
     async def _async_get_facility_data(
         self,
         network_code: NetworkCode,
-        facility_code: str | list[str],
-        metrics: list[DataMetric],
+        facility_code: str | list[str] | None = None,
+        metrics: list[DataMetric] | None = None,
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
         date_end: datetime | None = None,
+        unit_code: str | list[str] | None = None,
     ) -> TimeSeriesResponse:
         """Async implementation of get_facility_data."""
         logger.debug(
             "Getting facility data for %s/%s (metrics: %s, interval: %s)",
             network_code,
-            facility_code,
+            facility_code or unit_code,
             metrics,
             interval,
         )
         self._ensure_session()
         params = {
             "facility_code": facility_code,
-            "metrics": [m.value for m in metrics],
+            "unit_code": unit_code,
+            "metrics": [m.value for m in metrics] if metrics else None,
             "interval": interval,
             "date_start": date_start.isoformat() if date_start else None,
             "date_end": date_end.isoformat() if date_end else None,
@@ -345,18 +347,21 @@ class OEClient(BaseOEClient):
     def get_facility_data(
         self,
         network_code: NetworkCode,
-        facility_code: str | list[str],
-        metrics: list[DataMetric],
+        facility_code: str | list[str] | None = None,
+        metrics: list[DataMetric] | None = None,
         interval: DataInterval | None = None,
         date_start: datetime | None = None,
         date_end: datetime | None = None,
+        unit_code: str | list[str] | None = None,
     ) -> TimeSeriesResponse:
         """Get facility data for specified metrics."""
 
         async def _run():
             async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
                 self._session = session
-                return await self._async_get_facility_data(network_code, facility_code, metrics, interval, date_start, date_end)
+                return await self._async_get_facility_data(
+                    network_code, facility_code, metrics, interval, date_start, date_end, unit_code
+                )
 
         return asyncio.run(_run())
 
