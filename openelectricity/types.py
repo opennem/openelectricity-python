@@ -5,7 +5,7 @@ This module contains type definitions, enums, and type aliases used across the A
 Matches the TypeScript definitions from the official client.
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 # Network and Data Types
@@ -15,7 +15,7 @@ DataPrimaryGrouping = Literal["network", "network_region"]
 DataSecondaryGrouping = Literal["fueltech", "fueltech_group", "status", "renewable"]
 
 
-class Network(str, Enum):
+class Network(StrEnum):
     """Supported networks"""
 
     NEM = "NEM"
@@ -23,7 +23,7 @@ class Network(str, Enum):
     AU = "AU"
 
 
-class DataMetric(str, Enum):
+class DataMetric(StrEnum):
     """Data metrics available for network and facility data."""
 
     POWER = "power"
@@ -34,7 +34,7 @@ class DataMetric(str, Enum):
     STORAGE_BATTERY = "storage_battery"
 
 
-class MarketMetric(str, Enum):
+class MarketMetric(StrEnum):
     """Market metrics available for market data."""
 
     PRICE = "price"
@@ -52,7 +52,7 @@ class MarketMetric(str, Enum):
     FLOW_EXPORTS_ENERGY = "flow_exports_energy"
 
 
-class UnitFueltechType(str, Enum):
+class UnitFueltechType(StrEnum):
     """Types of fuel technologies for units."""
 
     BATTERY = "battery"
@@ -85,7 +85,7 @@ class UnitFueltechType(str, Enum):
     AGGREGATOR_DR = "aggregator_dr"
 
 
-class UnitStatusType(str, Enum):
+class UnitStatusType(StrEnum):
     """Types of unit statuses."""
 
     COMMITTED = "committed"
@@ -93,7 +93,7 @@ class UnitStatusType(str, Enum):
     RETIRED = "retired"
 
 
-class UnitDateSpecificity(str, Enum):
+class UnitDateSpecificity(StrEnum):
     """Date specificity for unit dates."""
 
     YEAR = "year"
@@ -102,7 +102,7 @@ class UnitDateSpecificity(str, Enum):
     DAY = "day"
 
 
-class FueltechGroupType(str, Enum):
+class FueltechGroupType(StrEnum):
     """Types of fuel technology groups."""
 
     SOLAR = "solar"
@@ -116,7 +116,7 @@ class FueltechGroupType(str, Enum):
     OTHER = "other"
 
 
-class OpenNEMRoles(str, Enum):
+class OpenNEMRoles(StrEnum):
     """User roles in the OpenNEM system."""
 
     ADMIN = "admin"
@@ -126,7 +126,7 @@ class OpenNEMRoles(str, Enum):
     ANONYMOUS = "anonymous"
 
 
-class MilestoneType(str, Enum):
+class MilestoneType(StrEnum):
     """Types of milestones."""
 
     POWER = "power"
@@ -138,7 +138,7 @@ class MilestoneType(str, Enum):
     PROPORTION = "proportion"
 
 
-class MilestonePeriod(str, Enum):
+class MilestonePeriod(StrEnum):
     """Time periods for milestone data."""
 
     INTERVAL = "interval"
@@ -151,7 +151,7 @@ class MilestonePeriod(str, Enum):
     FINANCIAL_YEAR = "financial_year"
 
 
-class MilestoneAggregate(str, Enum):
+class MilestoneAggregate(StrEnum):
     """Aggregation types for milestone data."""
 
     LOW = "low"
