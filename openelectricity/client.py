@@ -119,8 +119,8 @@ class OEClient(BaseOEClient):
     async def _async_get_facilities(
         self,
         facility_code: list[str] | None = None,
-        status_id: list[UnitStatusType] | None = None,
-        fueltech_id: list[UnitFueltechType] | None = None,
+        status_id: list[UnitStatusType | str] | None = None,
+        fueltech_id: list[UnitFueltechType | str] | None = None,
         network_id: list[str] | None = None,
         network_region: str | None = None,
     ) -> FacilityResponse:
@@ -129,8 +129,8 @@ class OEClient(BaseOEClient):
         self._ensure_session()
         params = {
             "facility_code": facility_code,
-            "status_id": [s.value for s in status_id] if status_id else None,
-            "fueltech_id": [f.value for f in fueltech_id] if fueltech_id else None,
+            "status_id": [s.value if hasattr(s, "value") else s for s in status_id] if status_id else None,
+            "fueltech_id": [f.value if hasattr(f, "value") else f for f in fueltech_id] if fueltech_id else None,
             "network_id": network_id,
             "network_region": network_region,
         }
@@ -280,8 +280,8 @@ class OEClient(BaseOEClient):
     def get_facilities(
         self,
         facility_code: list[str] | None = None,
-        status_id: list[UnitStatusType] | None = None,
-        fueltech_id: list[UnitFueltechType] | None = None,
+        status_id: list[UnitStatusType | str] | None = None,
+        fueltech_id: list[UnitFueltechType | str] | None = None,
         network_id: list[str] | None = None,
         network_region: str | None = None,
     ) -> FacilityResponse:
@@ -447,8 +447,8 @@ class AsyncOEClient(BaseOEClient):
     async def get_facilities(
         self,
         facility_code: list[str] | None = None,
-        status_id: list[UnitStatusType] | None = None,
-        fueltech_id: list[UnitFueltechType] | None = None,
+        status_id: list[UnitStatusType | str] | None = None,
+        fueltech_id: list[UnitFueltechType | str] | None = None,
         network_id: list[str] | None = None,
         network_region: str | None = None,
     ) -> FacilityResponse:
@@ -457,8 +457,8 @@ class AsyncOEClient(BaseOEClient):
         await self._ensure_client()
         params = {
             "facility_code": facility_code,
-            "status_id": [s.value for s in status_id] if status_id else None,
-            "fueltech_id": [f.value for f in fueltech_id] if fueltech_id else None,
+            "status_id": [s.value if hasattr(s, "value") else s for s in status_id] if status_id else None,
+            "fueltech_id": [f.value if hasattr(f, "value") else f for f in fueltech_id] if fueltech_id else None,
             "network_id": network_id,
             "network_region": network_region,
         }
