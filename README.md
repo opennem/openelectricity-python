@@ -26,14 +26,14 @@ For documentation visit [docs.openelectricity.org.au](https://docs.openelectrici
 ## Installation
 
 ```bash
-# Install base package
-pip install openelectricity
-
 # or with uv (recommended)
 uv add openelectricity
 
 # Install with data analysis support (Polars/Pandas)
 uv add "openelectricity[analysis]"
+
+# Install base package with pip
+pip install openelectricity
 ```
 
 ## Quick Start
@@ -48,7 +48,18 @@ export OPENELECTRICITY_API_KEY=your-api-key
 export OPENELECTRICITY_API_URL=http://localhost:8000/v4
 ```
 
-Then in your code:
+## Quick Test
+
+You can test the client and authentication with the following:
+
+```python
+
+
+```
+
+## Data Examples
+
+Examples of using the client are in the `examples` directory. Here are some basic examples:
 
 ```python
 from datetime import datetime, timedelta
@@ -190,6 +201,8 @@ with OEClient() as client:
 ```
 
 ## Development
+
+Development is preferred with `uv` and there are targets in the Makefile for common tasks and managing releases. There are optional dependency groups for development, analysis and testing. You can install all of them with `make install` (which runs `uv sync --all-extras`).
 
 1. Clone the repository
 2. Install development dependencies:
