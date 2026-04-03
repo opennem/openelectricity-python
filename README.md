@@ -2,13 +2,7 @@
 
 ![logo](https://platform.openelectricity.org.au/oe_logo_full.png)
 
-> [!WARNING]
-> This project and the v4 API are currently under active development.
-
 A Python client for the [OpenElectricity](https://openelectricity.org.au) API, providing access to electricity and energy network data and metrics for Australia.
-
-> [!NOTE]
-> API key signups are currently waitlisted and will be released gradually.
 
 To obtain an API key visit [platform.openelectricity.org.au](https://platform.openelectricity.org.au)
 
