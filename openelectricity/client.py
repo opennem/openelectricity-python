@@ -6,10 +6,11 @@ This module provides both synchronous and asynchronous clients for the OpenElect
 
 import asyncio
 import os
+import ssl
 from datetime import datetime
 from typing import Any, TypeVar, cast
 
-from aiohttp import ClientResponse, ClientSession
+from aiohttp import BasicAuth, ClientResponse, ClientSession, TCPConnector
 
 from openelectricity.logging import get_logger
 from openelectricity.models.facilities import FacilityResponse
@@ -54,9 +55,34 @@ class BaseOEClient:
         api_key: Optional API key for authentication. If not provided, will look for
                 OPENELECTRICITY_API_KEY environment variable.
         base_url: Optional base URL for the API. Defaults to production API.
+        proxy: Optional proxy URL (e.g. "http://proxy.corp:8080") for all requests.
+        proxy_auth: Optional aiohttp.BasicAuth for proxy authentication.
+        verify_ssl: Whether to verify TLS certificates. Defaults to True. Set to
+                False to disable verification (not recommended).
+        ssl_context: Optional pre-built ssl.SSLContext, e.g. for a corporate CA.
+        ca_cert: Optional path to a CA certificate bundle. A convenience over
+                ssl_context for the common "trust this extra CA" case.
+        trust_env: Whether aiohttp should read proxy settings, .netrc and TLS
+                config from the environment (HTTP_PROXY/HTTPS_PROXY etc).
+                Defaults to False.
+
+    Note:
+        ssl_context and ca_cert are mutually exclusive, and neither can be
+        combined with verify_ssl=False.
     """
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        *,
+        proxy: str | None = None,
+        proxy_auth: BasicAuth | None = None,
+        verify_ssl: bool = True,
+        ssl_context: ssl.SSLContext | None = None,
+        ca_cert: str | os.PathLike[str] | None = None,
+        trust_env: bool = False,
+    ) -> None:
         # Ensure base_url has a trailing slash for aiohttp ClientSession
         if base_url:
             self.base_url = base_url.rstrip("/") + "/"
@@ -77,7 +103,59 @@ class BaseOEClient:
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
+
+        # Proxy and TLS configuration, applied in _build_session().
+        self.proxy = proxy
+        self.proxy_auth = proxy_auth
+        self.trust_env = trust_env
+        self._ssl = self._resolve_ssl(verify_ssl, ssl_context, ca_cert)
+
         logger.debug("Initialized client with base URL: %s", self.base_url)
+
+    @staticmethod
+    def _resolve_ssl(
+        verify_ssl: bool,
+        ssl_context: ssl.SSLContext | None,
+        ca_cert: str | os.PathLike[str] | None,
+    ) -> ssl.SSLContext | bool | None:
+        """Resolve TLS settings into a value for aiohttp's TCPConnector.
+
+        Returns None when defaults apply (no custom connector needed), False to
+        disable verification, or an SSLContext for a custom CA.
+        """
+        if ssl_context is not None and ca_cert is not None:
+            raise OpenElectricityError("Provide either ssl_context or ca_cert, not both")
+        if (ssl_context is not None or ca_cert is not None) and not verify_ssl:
+            raise OpenElectricityError("verify_ssl=False conflicts with a custom ssl_context/ca_cert")
+
+        if ssl_context is not None:
+            return ssl_context
+        if ca_cert is not None:
+            # Add the extra CA to the default trust store rather than
+            # replacing it (cafile= on create_default_context would drop the
+            # system CAs and break normal public TLS).
+            context = ssl.create_default_context()
+            context.load_verify_locations(cafile=os.fspath(ca_cert))
+            return context
+        if not verify_ssl:
+            return False
+        return None
+
+    def _build_session(self) -> ClientSession:
+        """Create a ClientSession with the configured proxy and TLS options.
+
+        Single point of session construction so proxy, custom certificates and
+        trust_env behaviour stay consistent across the sync and async clients.
+        """
+        connector = TCPConnector(ssl=self._ssl) if self._ssl is not None else None
+        return ClientSession(
+            base_url=self.base_url,
+            headers=self.headers,
+            trust_env=self.trust_env,
+            proxy=self.proxy,
+            proxy_auth=self.proxy_auth,
+            connector=connector,
+        )
 
 
 class OEClient(BaseOEClient):
@@ -88,8 +166,28 @@ class OEClient(BaseOEClient):
     API consistency while using the same underlying HTTP client as the async version.
     """
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        super().__init__(api_key, base_url)
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        *,
+        proxy: str | None = None,
+        proxy_auth: BasicAuth | None = None,
+        verify_ssl: bool = True,
+        ssl_context: ssl.SSLContext | None = None,
+        ca_cert: str | os.PathLike[str] | None = None,
+        trust_env: bool = False,
+    ) -> None:
+        super().__init__(
+            api_key,
+            base_url,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            verify_ssl=verify_ssl,
+            ssl_context=ssl_context,
+            ca_cert=ca_cert,
+            trust_env=trust_env,
+        )
         self._session: ClientSession | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
         logger.debug("Initialized synchronous client")
@@ -98,10 +196,7 @@ class OEClient(BaseOEClient):
         """Ensure session and event loop are initialized."""
         if self._session is None or self._session.closed:
             logger.debug("Creating new client session")
-            self._session = ClientSession(
-                base_url=self.base_url,
-                headers=self.headers,
-            )
+            self._session = self._build_session()
 
     async def _handle_response(self, response: ClientResponse) -> dict[str, Any] | list[dict[str, Any]]:
         """Handle API response and raise appropriate errors."""
@@ -288,7 +383,7 @@ class OEClient(BaseOEClient):
         """Get a list of facilities."""
 
         async def _run():
-            async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
+            async with self._build_session() as session:
                 self._session = session
                 return await self._async_get_facilities(facility_code, status_id, fueltech_id, network_id, network_region)
 
@@ -327,7 +422,7 @@ class OEClient(BaseOEClient):
         """
 
         async def _run():
-            async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
+            async with self._build_session() as session:
                 self._session = session
                 return await self._async_get_network_data(
                     network_code,
@@ -357,7 +452,7 @@ class OEClient(BaseOEClient):
         """Get facility data for specified metrics."""
 
         async def _run():
-            async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
+            async with self._build_session() as session:
                 self._session = session
                 return await self._async_get_facility_data(
                     network_code, facility_code, metrics, interval, date_start, date_end, unit_code
@@ -378,7 +473,7 @@ class OEClient(BaseOEClient):
         """Get market data for specified metrics."""
 
         async def _run():
-            async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
+            async with self._build_session() as session:
                 self._session = session
                 return await self._async_get_market(
                     network_code, metrics, interval, date_start, date_end, primary_grouping, network_region
@@ -390,7 +485,7 @@ class OEClient(BaseOEClient):
         """Get current user information."""
 
         async def _run():
-            async with ClientSession(base_url=self.base_url, headers=self.headers) as session:
+            async with self._build_session() as session:
                 self._session = session
                 return await self._async_get_current_user()
 
@@ -417,8 +512,28 @@ class AsyncOEClient(BaseOEClient):
     Asynchronous client for the OpenElectricity API.
     """
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
-        super().__init__(api_key, base_url)
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        *,
+        proxy: str | None = None,
+        proxy_auth: BasicAuth | None = None,
+        verify_ssl: bool = True,
+        ssl_context: ssl.SSLContext | None = None,
+        ca_cert: str | os.PathLike[str] | None = None,
+        trust_env: bool = False,
+    ) -> None:
+        super().__init__(
+            api_key,
+            base_url,
+            proxy=proxy,
+            proxy_auth=proxy_auth,
+            verify_ssl=verify_ssl,
+            ssl_context=ssl_context,
+            ca_cert=ca_cert,
+            trust_env=trust_env,
+        )
         self.client: ClientSession | None = None
         logger.debug("Initialized asynchronous client")
 
@@ -426,10 +541,7 @@ class AsyncOEClient(BaseOEClient):
         """Ensure client session is initialized."""
         if self.client is None or self.client.closed:
             logger.debug("Creating new async client session")
-            self.client = ClientSession(
-                base_url=self.base_url,
-                headers=self.headers,
-            )
+            self.client = self._build_session()
 
     async def _handle_response(self, response: ClientResponse) -> dict[str, Any] | list[dict[str, Any]]:
         """Handle API response and raise appropriate errors."""
