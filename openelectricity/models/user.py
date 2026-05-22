@@ -43,6 +43,12 @@ class OpenNEMUser(BaseModel):
 
 
 class OpennemUserResponse(APIResponse[OpenNEMUser]):
-    """Response model for user endpoints."""
+    """Response model for user endpoints.
 
+    The ``/v4/me`` endpoint does not return ``version`` or ``created_at``,
+    so these are optional here unlike the rest of the API responses.
+    """
+
+    version: str | None = None
+    created_at: datetime | None = None
     data: OpenNEMUser
