@@ -1,0 +1,4 @@
+# gitignored files copied into `claude --worktree` worktrees so an isolated
+# checkout has a working dev environment (API key for tests, publish tokens).
+.env
+.envrc
