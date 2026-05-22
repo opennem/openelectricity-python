@@ -5,8 +5,20 @@ This module contains type definitions, enums, and type aliases used across the A
 Matches the TypeScript definitions from the official client.
 """
 
-from enum import StrEnum
+import sys
 from typing import Any, Literal
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:  # pragma: no cover - Python 3.10 compatibility shim
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Minimal backport of enum.StrEnum for Python 3.10."""
+
+        __str__ = str.__str__
+        __format__ = str.__format__
+
 
 # Network and Data Types
 NetworkCode = Literal["NEM", "WEM", "AU"]

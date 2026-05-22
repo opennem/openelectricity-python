@@ -4,11 +4,19 @@ Tests for the OpenElectricity API client.
 This module contains tests for both synchronous and asynchronous clients.
 """
 
+import os
+
 import pytest
 
 from openelectricity import AsyncOEClient, OEClient
 from openelectricity.models.facilities import Facility, FacilityResponse
 from openelectricity.types import UnitFueltechType, UnitStatusType
+
+# Tests that hit the live API; skipped unless an API key is available.
+requires_api_key = pytest.mark.skipif(
+    not os.getenv("OPENELECTRICITY_API_KEY"),
+    reason="live API test; set OPENELECTRICITY_API_KEY to run",
+)
 
 
 @pytest.fixture
@@ -79,6 +87,7 @@ def test_facility_response_parsing(facility_response):
     assert unit.dispatch_type == "GENERATOR"
 
 
+@requires_api_key
 @pytest.mark.asyncio
 async def test_async_get_facilities():
     """Test getting facilities with async client."""
@@ -103,6 +112,7 @@ async def test_async_get_facilities():
         await client.close()
 
 
+@requires_api_key
 def test_sync_get_facilities():
     """Test getting facilities with sync client."""
     with OEClient() as client:
