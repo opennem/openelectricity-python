@@ -5,7 +5,7 @@ This module contains tests for the time series response models
 using real API response examples.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -148,7 +148,7 @@ def test_timeseries_result_parsing(facility_response):
 
     # Check first data point
     first_point = result.data[0]
-    assert first_point.timestamp == datetime(2025, 2, 12, 13, tzinfo=UTC)
+    assert first_point.timestamp == datetime(2025, 2, 12, 13, tzinfo=timezone.utc)
     assert first_point.value == 931.4554
 
 
@@ -157,7 +157,7 @@ def test_timeseries_datapoint_parsing():
     data = ["2025-02-12T13:00:00Z", 931.4554]
     point = TimeSeriesDataPoint.model_validate(data)
 
-    assert point.timestamp == datetime(2025, 2, 12, 13, tzinfo=UTC)
+    assert point.timestamp == datetime(2025, 2, 12, 13, tzinfo=timezone.utc)
     assert point.value == 931.4554
 
 

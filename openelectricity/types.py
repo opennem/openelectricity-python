@@ -19,6 +19,7 @@ else:  # pragma: no cover - Python 3.10 compatibility shim
         __str__ = str.__str__
         __format__ = str.__format__
 
+
 # Network and Data Types
 NetworkCode = Literal["NEM", "WEM", "AU"]
 DataInterval = Literal["5m", "1h", "1d", "7d", "1M", "3M", "season", "1y", "fy"]
