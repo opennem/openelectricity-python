@@ -36,13 +36,18 @@ class Network(StrEnum):
 
 
 class DataMetric(StrEnum):
-    """Data metrics available for network and facility data."""
+    """Data metrics available for network and facility data.
+
+    Note: ``renewable_proportion`` is a market-level metric and is only
+    available via :meth:`get_market` with
+    :attr:`MarketMetric.RENEWABLE_PROPORTION`. It is not exposed on
+    ``/data/network/`` and so is not listed here.
+    """
 
     POWER = "power"
     ENERGY = "energy"
     EMISSIONS = "emissions"
     MARKET_VALUE = "market_value"
-    RENEWABLE_PROPORTION = "renewable_proportion"
     STORAGE_BATTERY = "storage_battery"
 
 
