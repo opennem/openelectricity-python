@@ -2,6 +2,12 @@
 
 ![logo](https://platform.openelectricity.org.au/oe_logo_full.png)
 
+[![PyPI](https://img.shields.io/pypi/v/openelectricity.svg)](https://pypi.org/project/openelectricity/)
+[![Python](https://img.shields.io/pypi/pyversions/openelectricity.svg)](https://pypi.org/project/openelectricity/)
+[![CI](https://github.com/opennem/openelectricity-python/actions/workflows/ci.yml/badge.svg)](https://github.com/opennem/openelectricity-python/actions/workflows/ci.yml)
+[![Downloads](https://static.pepy.tech/badge/openelectricity/month)](https://pepy.tech/project/openelectricity)
+[![License](https://img.shields.io/pypi/l/openelectricity.svg)](https://github.com/opennem/openelectricity-python/blob/main/LICENSE)
+
 A Python client for the [OpenElectricity](https://openelectricity.org.au) API, providing access to electricity and energy network data and metrics for Australia.
 
 To obtain an API key visit [platform.openelectricity.org.au](https://platform.openelectricity.org.au)
