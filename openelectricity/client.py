@@ -65,6 +65,25 @@ class APIError(OpenElectricityError):
         super().__init__(f"API Error {status_code}: {detail}")
 
 
+# The /data/facilities/ endpoint caps facility_code and unit_code at this many
+# items per request (the server returns a 422 above it). Catching it client-side
+# turns a network round-trip + pydantic error payload into a plain Python error.
+_FACILITY_LIST_LIMIT = 30
+
+
+def _check_facility_list_limit(
+    facility_code: str | list[str] | None,
+    unit_code: str | list[str] | None,
+) -> None:
+    """Raise OpenElectricityError if either code list exceeds the API's per-request cap."""
+    for name, value in (("facility_code", facility_code), ("unit_code", unit_code)):
+        if isinstance(value, list) and len(value) > _FACILITY_LIST_LIMIT:
+            raise OpenElectricityError(
+                f"{name} accepts at most {_FACILITY_LIST_LIMIT} codes per request; "
+                f"got {len(value)}. Split into chunks of {_FACILITY_LIST_LIMIT} or filter further."
+            )
+
+
 class BaseOEClient:
     """
     Base client for the OpenElectricity API.
@@ -324,6 +343,7 @@ class OEClient(BaseOEClient):
         unit_code: str | list[str] | None = None,
     ) -> TimeSeriesResponse:
         """Async implementation of get_facility_data."""
+        _check_facility_list_limit(facility_code, unit_code)
         logger.debug(
             "Getting facility data for %s/%s (metrics: %s, interval: %s)",
             network_code,
@@ -468,7 +488,14 @@ class OEClient(BaseOEClient):
         date_end: datetime | None = None,
         unit_code: str | list[str] | None = None,
     ) -> TimeSeriesResponse:
-        """Get facility data for specified metrics."""
+        """Get facility data for specified metrics.
+
+        Note:
+            The API accepts at most 30 ``facility_code`` (or ``unit_code``)
+            items per request. Larger lists raise
+            :class:`OpenElectricityError` before the request is sent — split
+            into chunks of 30 or filter further.
+        """
 
         async def _run():
             async with self._build_session() as session:
@@ -668,7 +695,15 @@ class AsyncOEClient(BaseOEClient):
         date_end: datetime | None = None,
         unit_code: str | list[str] | None = None,
     ) -> TimeSeriesResponse:
-        """Get facility data for specified metrics."""
+        """Get facility data for specified metrics.
+
+        Note:
+            The API accepts at most 30 ``facility_code`` (or ``unit_code``)
+            items per request. Larger lists raise
+            :class:`OpenElectricityError` before the request is sent — split
+            into chunks of 30 or filter further.
+        """
+        _check_facility_list_limit(facility_code, unit_code)
         logger.debug(
             "Getting facility data for %s/%s (metrics: %s, interval: %s)",
             network_code,
