@@ -31,10 +31,17 @@ class TimeSeriesDataPoint(RootModel):
 
 
 class TimeSeriesColumns(BaseModel):
-    """Column metadata for time series results."""
+    """Column metadata for time series results.
+
+    Populated according to the ``secondary_grouping`` used in the request:
+    ``fueltech`` / ``fueltech_group`` / ``renewable`` / ``unit_code`` /
+    ``network_region``.
+    """
 
     unit_code: str | None = None
+    fueltech: str | None = None
     fueltech_group: str | None = None
+    renewable: bool | None = None
     network_region: str | None = None
 
 

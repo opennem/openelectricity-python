@@ -195,3 +195,36 @@ def test_invalid_interval():
                 "network_timezone_offset": "+10:00",
             }
         )
+
+
+def test_columns_fueltech_populated_when_grouping_by_fueltech() -> None:
+    """secondary_grouping=fueltech sets the fueltech column (issue surfaced
+    while validating #8)."""
+    result = TimeSeriesResult.model_validate(
+        {
+            "name": "energy_solar_rooftop",
+            "date_start": "2026-05-22T00:00:00+10:00",
+            "date_end": "2026-05-23T00:00:00+10:00",
+            "columns": {"fueltech": "solar_rooftop"},
+            "data": [["2026-05-22T00:00:00+10:00", 48000.0]],
+        }
+    )
+    assert result.columns.fueltech == "solar_rooftop"
+    assert result.columns.fueltech_group is None
+    assert result.columns.renewable is None
+
+
+def test_columns_renewable_populated_when_grouping_by_renewable() -> None:
+    """secondary_grouping=renewable sets the renewable boolean column."""
+    result = TimeSeriesResult.model_validate(
+        {
+            "name": "energy_True",
+            "date_start": "2026-05-22T00:00:00+10:00",
+            "date_end": "2026-05-23T00:00:00+10:00",
+            "columns": {"renewable": True},
+            "data": [["2026-05-22T00:00:00+10:00", 250000.0]],
+        }
+    )
+    assert result.columns.renewable is True
+    assert result.columns.fueltech is None
+    assert result.columns.fueltech_group is None
