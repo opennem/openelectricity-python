@@ -701,13 +701,15 @@ class AsyncOEClient(BaseOEClient):
         date_start: datetime | None = None,
         date_end: datetime | None = None,
         primary_grouping: DataPrimaryGrouping | None = None,
+        network_region: str | None = None,
     ) -> TimeSeriesResponse:
         """Get market data for specified metrics."""
         logger.debug(
-            "Getting market data for %s (metrics: %s, interval: %s)",
+            "Getting market data for %s (metrics: %s, interval: %s, region: %s)",
             network_code,
             metrics,
             interval,
+            network_region,
         )
         await self._ensure_client()
         params = {
@@ -716,6 +718,7 @@ class AsyncOEClient(BaseOEClient):
             "date_start": date_start.isoformat() if date_start else None,
             "date_end": date_end.isoformat() if date_end else None,
             "primary_grouping": primary_grouping,
+            "network_region": network_region,
         }
         # Remove None values
         params = {k: v for k, v in params.items() if v is not None}
