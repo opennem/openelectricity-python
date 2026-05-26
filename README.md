@@ -12,7 +12,9 @@ A Python client for the [OpenElectricity](https://openelectricity.org.au) API, p
 
 To obtain an API key visit [platform.openelectricity.org.au](https://platform.openelectricity.org.au)
 
-For documentation visit [docs.openelectricity.org.au](https://docs.openelectricity.org.au/introduction)
+For documentation visit [docs.openelectricity.org.au](https://docs.openelectricity.org.au/introduction).
+
+See [CHANGELOG.md](./CHANGELOG.md) for release notes.
 
 ## Features
 
