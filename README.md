@@ -1,6 +1,6 @@
 # OpenElectricity Python Client
 
-![logo](https://platform.openelectricity.org.au/oe_logo_full.png)
+![logo](https://docs.openelectricity.org.au/images/oe_logo_full_black.png)
 
 [![PyPI](https://img.shields.io/pypi/v/openelectricity.svg)](https://pypi.org/project/openelectricity/)
 [![Python](https://img.shields.io/pypi/pyversions/openelectricity.svg)](https://pypi.org/project/openelectricity/)
