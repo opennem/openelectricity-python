@@ -78,6 +78,28 @@ def test_build_session_applies_proxy_and_trust_env() -> None:
     asyncio.run(_check())
 
 
+def test_build_session_uses_threaded_resolver() -> None:
+    """DNS goes through the OS resolver, not aiodns/c-ares.
+
+    aiohttp[speedups] installs aiodns and aiohttp then defaults to the c-ares
+    AsyncResolver, which fails (DNSError 11, 'Could not contact DNS servers')
+    in environments where getaddrinfo works fine. Pin ThreadedResolver so the
+    SDK resolves DNS the same way the OS does.
+    """
+    from aiohttp.resolver import ThreadedResolver
+
+    client = OEClient(api_key=API_KEY)
+
+    async def _check() -> None:
+        session = client._build_session()
+        try:
+            assert isinstance(session.connector._resolver, ThreadedResolver)
+        finally:
+            await session.close()
+
+    asyncio.run(_check())
+
+
 def test_async_client_accepts_proxy_and_ssl_kwargs() -> None:
     client = AsyncOEClient(api_key=API_KEY, proxy="http://proxy.corp:8080", verify_ssl=False)
     assert client.proxy == "http://proxy.corp:8080"
