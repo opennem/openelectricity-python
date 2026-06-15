@@ -12,7 +12,7 @@ from collections.abc import Coroutine
 from datetime import datetime
 from typing import Any, TypeVar, cast
 
-from aiohttp import BasicAuth, ClientResponse, ClientSession, TCPConnector
+from aiohttp import BasicAuth, ClientResponse, ClientSession, TCPConnector, ThreadedResolver
 
 from openelectricity.logging import get_logger
 from openelectricity.models.facilities import FacilityResponse
@@ -184,7 +184,17 @@ class BaseOEClient:
         Single point of session construction so proxy, custom certificates and
         trust_env behaviour stay consistent across the sync and async clients.
         """
-        connector = TCPConnector(ssl=self._ssl) if self._ssl is not None else None
+        # Force the threaded (OS getaddrinfo) resolver. The aiohttp[speedups]
+        # extra installs aiodns, which makes aiohttp default to the c-ares
+        # AsyncResolver. c-ares resolves DNS independently of the OS stub
+        # resolver and fails in environments where getaddrinfo (and nslookup)
+        # work fine — Windows ProactorEventLoop, WSL/containers pointing at
+        # 127.0.0.53, split-DNS VPNs — raising
+        # aiodns.error.DNSError (11, 'Could not contact DNS servers').
+        connector = TCPConnector(
+            resolver=ThreadedResolver(),
+            ssl=self._ssl if self._ssl is not None else True,
+        )
         return ClientSession(
             base_url=self.base_url,
             headers=self.headers,

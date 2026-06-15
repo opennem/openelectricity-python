@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.3
 
 ### Added
 
@@ -9,6 +9,17 @@
   (30), with a message naming the param and the limit. Avoids a
   round-trip + the server-side 422 payload. Docstrings updated to
   document the cap. (#10, #36)
+
+### Fixed
+
+- DNS resolution now uses the OS resolver (`ThreadedResolver`/`getaddrinfo`)
+  instead of aiodns. The `aiohttp[speedups]` extra installs aiodns, which made
+  aiohttp default to the c-ares `AsyncResolver`. c-ares resolves DNS
+  independently of the OS stub resolver and failed with
+  `aiodns.error.DNSError (11, 'Could not contact DNS servers')` in
+  environments where the OS resolver (and `nslookup`) work fine — Windows
+  `ProactorEventLoop`, WSL/containers pointing at `127.0.0.53`, split-DNS
+  VPNs. The connector is now pinned to `ThreadedResolver`.
 
 ## 0.11.2
 
