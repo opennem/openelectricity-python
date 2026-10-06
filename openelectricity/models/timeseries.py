@@ -42,8 +42,9 @@ class _AliasedModel(BaseModel):
 
     def __setattr__(self, name: str, value: Any) -> None:
         super().__setattr__(name, value)
+        values = vars(self)
         for partner in self._partners(name):
-            vars(self)[partner] = value
+            values[partner] = values[name]
 
     @classmethod
     def model_construct(cls, _fields_set: set[str] | None = None, **values: Any) -> Self:
@@ -53,9 +54,11 @@ class _AliasedModel(BaseModel):
 
     def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:
         copy = super().model_copy(update=update, deep=deep)
-        for name, value in (update or {}).items():
+        updated = update or {}
+        for name, value in updated.items():
             for partner in self._partners(name):
-                vars(copy)[partner] = value
+                if partner not in updated:
+                    vars(copy)[partner] = value
         return copy
 
     def __setstate__(self, state: dict[Any, Any]) -> None:
