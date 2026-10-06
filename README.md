@@ -130,6 +130,25 @@ async def main():
 asyncio.run(main())
 ```
 
+### Rooftop solar forecast
+
+`MarketMetric.SOLAR_ROOFTOP_FORECAST` (MW, NEM only) accepts a `date_end` in the future, up to the latest forecast interval. Each forecast series carries `forecast_run_time`, the issue time of the newest AEMO run used. `examples/rooftop_forecast.py` splices it onto rooftop actuals; see the [forecast guide](https://docs.openelectricity.org.au/guides/forecast).
+
+```python
+from openelectricity.types import MarketMetric
+
+with OEClient() as client:
+    response = client.get_market(
+        network_code="NEM",
+        metrics=[MarketMetric.SOLAR_ROOFTOP_FORECAST],
+        interval="30m",
+        date_start=datetime(2026, 10, 6, 10, 30),
+        date_end=datetime(2026, 10, 8, 10, 30),
+        primary_grouping="network_region",
+    )
+    print(response.data[0].forecast_run_time)
+```
+
 ## Data Analysis
 
 The client provides built-in support for converting API responses to popular data analysis formats.

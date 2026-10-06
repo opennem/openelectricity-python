@@ -6,6 +6,7 @@ using real API response examples.
 """
 
 from datetime import datetime, timezone
+from typing import Any, get_args
 
 import pytest
 
@@ -15,6 +16,7 @@ from openelectricity.models.timeseries import (
     TimeSeriesResponse,
     TimeSeriesResult,
 )
+from openelectricity.types import VALID_INTERVALS, DataInterval, MarketMetric
 
 
 @pytest.fixture
@@ -228,3 +230,51 @@ def test_columns_renewable_populated_when_grouping_by_renewable() -> None:
     assert result.columns.renewable is True
     assert result.columns.fueltech is None
     assert result.columns.fueltech_group is None
+
+
+def _forecast_series(**extra: object) -> dict[str, object]:
+    return {
+        "network_code": "NEM",
+        "metric": "solar_rooftop_forecast",
+        "unit": "MW",
+        "interval": "30m",
+        "date_start": "2026-10-06T10:30:00+10:00",
+        "date_end": "2026-10-08T10:30:00+10:00",
+        "groupings": [],
+        "results": [
+            {
+                "name": "solar_rooftop_forecast_NSW1",
+                "date_start": "2026-10-06T10:30:00+10:00",
+                "date_end": "2026-10-08T10:30:00+10:00",
+                "columns": {"region": "NSW1"},
+                "data": [
+                    ["2026-10-06T10:30:00+10:00", 5120.5],
+                    ["2026-10-08T10:00:00+10:00", None],
+                ],
+            }
+        ],
+        "network_timezone_offset": "+10:00",
+        **extra,
+    }
+
+
+def test_forecast_series_parses_30m_and_run_time() -> None:
+    """solar_rooftop_forecast blocks carry the 30m interval and forecast_run_time (#675)."""
+    series = NetworkTimeSeries.model_validate(_forecast_series(forecast_run_time="2026-10-06T10:30:00+10:00"))
+
+    assert series.interval == "30m"
+    assert series.forecast_run_time == datetime(2026, 10, 6, 0, 30, tzinfo=timezone.utc)
+    assert series.results[0].data[1].value is None
+
+
+def test_forecast_run_time_absent_on_actual_metrics(facility_response: dict[str, Any]) -> None:
+    """Non-forecast blocks omit forecast_run_time."""
+    series = NetworkTimeSeries.model_validate(facility_response["data"][0])
+
+    assert series.forecast_run_time is None
+
+
+def test_forecast_metric_and_30m_interval_registered() -> None:
+    assert MarketMetric.SOLAR_ROOFTOP_FORECAST.value == "solar_rooftop_forecast"
+    assert "30m" in VALID_INTERVALS
+    assert "30m" in get_args(DataInterval)

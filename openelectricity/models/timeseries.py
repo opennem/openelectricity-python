@@ -67,6 +67,7 @@ class NetworkTimeSeries(BaseModel):
     groupings: list[str] = Field(default_factory=list)
     results: list[TimeSeriesResult]
     network_timezone_offset: str
+    forecast_run_time: datetime | None = None  # issue time of the newest forecast run, forecast metrics only
 
     @property
     def date_range(self) -> tuple[datetime | None, datetime | None]:

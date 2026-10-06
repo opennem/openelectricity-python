@@ -22,7 +22,7 @@ else:  # pragma: no cover - Python 3.10 compatibility shim
 
 # Network and Data Types
 NetworkCode = Literal["NEM", "WEM", "AU"]
-DataInterval = Literal["5m", "1h", "1d", "7d", "1M", "3M", "season", "1y", "fy"]
+DataInterval = Literal["5m", "30m", "1h", "1d", "7d", "1M", "3M", "season", "1y", "fy"]
 DataPrimaryGrouping = Literal["network", "network_region"]
 DataSecondaryGrouping = Literal["fueltech", "fueltech_group", "status", "renewable"]
 
@@ -75,6 +75,7 @@ class MarketMetric(StrEnum):
     FLOW_EXPORTS = "flow_exports"
     FLOW_IMPORTS_ENERGY = "flow_imports_energy"
     FLOW_EXPORTS_ENERGY = "flow_exports_energy"
+    SOLAR_ROOFTOP_FORECAST = "solar_rooftop_forecast"
 
 
 class UnitFueltechType(StrEnum):
@@ -186,7 +187,7 @@ class MilestoneAggregate(StrEnum):
 
 # Constants for validation
 VALID_NETWORKS = ["NEM", "WEM", "AU"]
-VALID_INTERVALS = ["5m", "1h", "1d", "7d", "1M", "3M", "season", "1y", "fy"]
+VALID_INTERVALS = ["5m", "30m", "1h", "1d", "7d", "1M", "3M", "season", "1y", "fy"]
 VALID_PRIMARY_GROUPINGS = ["network", "network_region"]
 VALID_SECONDARY_GROUPINGS = ["fueltech", "fueltech_group", "status", "renewable"]
 

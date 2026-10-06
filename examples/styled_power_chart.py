@@ -85,7 +85,7 @@ def fetch_power_data(client: OEClient, days_back: int = 3) -> pd.DataFrame:
         response = client.get_network_data(
             network_code="NEM",
             metrics=[DataMetric.POWER],
-            interval="5m",  # 5-minute intervals (30m not supported)
+            interval="5m",  # 5-minute intervals
             date_start=datetime.now() - timedelta(days=days_back),
             primary_grouping="network",
             secondary_grouping="fueltech",
