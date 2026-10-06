@@ -20,7 +20,7 @@ def _mirror_aliases(model: BaseModel, pairs: tuple[tuple[str, str], ...]) -> Non
     Writes to ``__dict__`` so the copy isn't marked as set (``to_records`` only emits keys the
     API sent) and reading the deprecated field here doesn't warn.
     """
-    values = model.__dict__
+    values = vars(model)
     for current, deprecated in pairs:
         if values[current] is None:
             values[current] = values[deprecated]
