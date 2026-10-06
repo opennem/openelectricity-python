@@ -19,7 +19,7 @@ from openelectricity.types import (
 
 __name__ = "openelectricity"
 
-__version__ = "0.11.3"
+__version__ = "0.12.0"
 
 __all__ = [
     "OEClient",
