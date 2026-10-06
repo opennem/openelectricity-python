@@ -259,7 +259,8 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
                 "Polars is required for DataFrame conversion. Install it with: uv add 'openelectricity[analysis]'"
             ) from None
 
-        return pl.DataFrame(self.to_records(merge_metrics=merge_metrics))
+        # scan every row for the schema: a metric whose rows start past the default 100 was dropped
+        return pl.DataFrame(self.to_records(merge_metrics=merge_metrics), infer_schema_length=None)
 
     def to_pandas(self, *, merge_metrics: bool = False) -> "pd.DataFrame":  # noqa: F821
         """

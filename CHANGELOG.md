@@ -33,6 +33,8 @@ validation, so no client change was needed for that.
   records include them as columns.
 - Facility records gain a `unit_code` column so units on the same interval can
   be told apart.
+- `to_polars()` dropped any metric whose rows started after the first 100, as
+  polars only scanned those for the schema. It now scans every row.
 
 ### Changed
 

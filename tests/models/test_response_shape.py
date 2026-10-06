@@ -349,3 +349,28 @@ def test_serialisation_keeps_old_keys(market_response: dict[str, Any]) -> None:
     assert dumped["end"] == dumped["date_end"]
     assert dumped["results"][0]["columns"]["network_region"] == "NSW1"
     assert NetworkTimeSeries.model_validate_json(series.model_dump_json()) == series
+
+
+def test_to_polars_keeps_metrics_that_start_after_100_rows() -> None:
+    """One row per value puts each metric's rows after the previous metric's; polars must see them all."""
+    pytest.importorskip("polars")
+    start = datetime(2026, 10, 5, tzinfo=AEST)
+    points = [[(start + timedelta(minutes=5 * i)).isoformat(), float(i)] for i in range(150)]
+
+    def block(metric: str) -> dict[str, Any]:
+        return {
+            "network_code": "NEM",
+            "metric": metric,
+            "unit": "MW",
+            "interval": "5m",
+            "network_timezone_offset": "+10:00",
+            "results": [{"name": metric, "date_start": points[0][0], "date_end": points[-1][0], "columns": {}, "data": points}],
+        }
+
+    response = TimeSeriesResponse.model_validate(
+        {"version": "4.5.17", "created_at": "2026-10-06T13:00:00+11:00", "data": [block("price"), block("demand")]}
+    )
+    df = response.to_polars()
+
+    assert df.height == 300
+    assert df["demand"].drop_nulls().len() == 150
