@@ -155,7 +155,11 @@ Each series in `response.data` carries `date_start` and `date_end` for its data 
 
 ## Data Analysis
 
-The client provides built-in support for converting API responses to popular data analysis formats. `to_records()`, `to_pandas()` and `to_polars()` return one row per interval and grouping with a column per metric. `interval` is the network-local time as a naive datetime, and grouping columns (`region`, `fueltech_group`, `unit_code`, ...) are included when present.
+The client provides built-in support for converting API responses to popular data analysis formats. `to_records()`, `to_pandas()` and `to_polars()` return one row per value by default, with `interval` (network-local time as a naive datetime), the grouping columns (`region`, `fueltech_group`, `unit_code`, ...) and the value under its metric name. Pass `merge_metrics=True` for one row per interval and grouping with a column per metric:
+
+```python
+df = response.to_pandas(merge_metrics=True)  # interval, region, price, demand
+```
 
 ### Using with Polars
 

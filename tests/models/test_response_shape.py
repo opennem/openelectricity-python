@@ -226,13 +226,82 @@ def test_readme_access_patterns(network_data_response: dict[str, Any]) -> None:
     assert (df["interval"] == pd.Timestamp("2026-10-04 00:00:00")).all()
 
 
-def test_to_records_merges_metrics_per_interval_and_region(market_response: dict[str, Any]) -> None:
+def _pre_change_to_records(raw: dict[str, Any]) -> list[dict[str, Any]]:
+    """to_records as shipped in 0.11.3, run on the raw response dict.
+
+    Kept verbatim in behaviour: columns limited to the old model's fields, the network offset
+    added to the timestamp, and a merge lookup that compares the raw timestamp with the shifted
+    interval.
+    """
+    old_columns = ("fueltech", "fueltech_group", "renewable", "network_region")
+    records: list[dict[str, Any]] = []
+    for series in raw["data"]:
+        sign = 1 if series["network_timezone_offset"].startswith("+") else -1
+        hours, minutes = map(int, series["network_timezone_offset"][1:].split(":"))
+        offset = timedelta(minutes=(hours * 60 + minutes) * sign)
+        for result in series["results"]:
+            groupings = {k: result["columns"][k] for k in old_columns if result["columns"].get(k) is not None}
+            for ts, value in result["data"]:
+                timestamp = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                record_key = (timestamp.isoformat(), *sorted(groupings.items()))
+                existing = next(
+                    (r for r in records if (r["interval"].isoformat(), *sorted((k, r[k]) for k in groupings)) == record_key),
+                    None,
+                )
+                if existing:
+                    existing[series["metric"]] = value
+                else:
+                    records.append({"interval": timestamp.replace(tzinfo=None) + offset, **groupings, series["metric"]: value})
+    return records
+
+
+def test_default_records_match_pre_change_shape(market_response: dict[str, Any]) -> None:
+    """Default output keeps the 0.11.3 row shape: one row per value, in the same order.
+
+    The only differences are the +10h fix and the additive region column.
+    """
     records = TimeSeriesResponse.model_validate(market_response).to_records()
+    before = _pre_change_to_records(market_response)
+
+    assert len(records) == len(before) == 8  # 2 metrics x 2 regions x 2 intervals
+    for new, old in zip(records, before, strict=True):
+        assert new["interval"] == old["interval"] - timedelta(hours=10)
+        assert {k: v for k, v in new.items() if k not in ("interval", "region")} == {
+            k: v for k, v in old.items() if k != "interval"
+        }
+    assert [r["region"] for r in records[:2]] == ["NSW1", "NSW1"]
+
+
+def test_default_records_equal_pre_change_on_legacy_shape(legacy_response: dict[str, Any]) -> None:
+    """On the older UTC response shape the default output is exactly what 0.11.3 returned."""
+    assert TimeSeriesResponse.model_validate(legacy_response).to_records() == _pre_change_to_records(legacy_response)
+
+
+def test_default_dataframes_keep_one_row_per_value(market_response: dict[str, Any]) -> None:
+    response = TimeSeriesResponse.model_validate(market_response)
+    pd = pytest.importorskip("pandas")
+    pl = pytest.importorskip("polars")
+
+    df = response.to_pandas()
+    assert len(df) == 8
+    assert df["price"].notna().sum() == 4 and df["demand"].notna().sum() == 4
+    assert isinstance(df, pd.DataFrame)
+    assert response.to_polars().height == 8
+    assert isinstance(response.to_polars(), pl.DataFrame)
+
+
+def test_merge_metrics_opt_in(market_response: dict[str, Any]) -> None:
+    response = TimeSeriesResponse.model_validate(market_response)
+    records = response.to_records(merge_metrics=True)
 
     assert len(records) == 4  # 2 regions x 2 intervals, price and demand on the same row
     nsw = next(r for r in records if r["region"] == "NSW1" and r["interval"] == datetime(2026, 10, 5))
-    assert nsw["price"] == 144.510833
-    assert nsw["demand"] == 6685.229167
+    assert nsw == {"interval": datetime(2026, 10, 5), "region": "NSW1", "price": 144.510833, "demand": 6685.229167}
+
+    pytest.importorskip("pandas")
+    assert len(response.to_pandas(merge_metrics=True)) == 4
+    pytest.importorskip("polars")
+    assert response.to_polars(merge_metrics=True).columns == ["interval", "region", "price", "demand"]
 
 
 def test_aliases_stay_in_step_after_assignment_and_copy(market_response: dict[str, Any]) -> None:

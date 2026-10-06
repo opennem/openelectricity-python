@@ -14,6 +14,10 @@ Rooftop solar forecast support ([opennem#675](https://github.com/opennem/opennem
   `None` when the values come from history loaded before run times were
   recorded (before October 2026).
 - `examples/rooftop_forecast.py` splices the forecast onto rooftop actuals.
+- `to_records()`, `to_pandas()` and `to_polars()` take an opt-in, keyword-only
+  `merge_metrics=True` that puts every metric for an interval and grouping on
+  one row, with a column per metric. The default output is unchanged, one row
+  per value.
 
 Forecast metrics accept a `date_end` in the future. The client does no date
 validation, so no client change was needed for that.
@@ -27,9 +31,8 @@ validation, so no client change was needed for that.
 - `region` grouping values were dropped on parse because the API sends
   `columns.region`. `TimeSeriesColumns` gains `region` and `status`, and
   records include them as columns.
-- `to_records()` now puts every metric for an interval and grouping on one row,
-  as documented. It previously emitted one row per value. Facility records gain
-  a `unit_code` column so units stay apart.
+- Facility records gain a `unit_code` column so units on the same interval can
+  be told apart.
 
 ### Changed
 

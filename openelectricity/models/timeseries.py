@@ -194,9 +194,13 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
 
         return timestamp.astimezone(network_tz).replace(tzinfo=None)
 
-    def to_records(self) -> list[dict[str, Any]]:
+    def to_records(self, *, merge_metrics: bool = False) -> list[dict[str, Any]]:
         """
         Convert time series data into a list of records suitable for data analysis.
+
+        Args:
+            merge_metrics: Put every metric for an interval and grouping on one row, with a
+                column per metric. By default each value gets its own row.
 
         Returns:
             List of dictionaries, each representing a row in the resulting table
@@ -217,9 +221,9 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
                 for point in result.data:
                     interval = self._create_network_date(point.timestamp, series.network_timezone_offset)
 
-                    # One record per interval and grouping, with a column per metric
+                    # By default every value gets its own record, as in earlier versions
                     record_key = (interval, *sorted(groupings.items()))
-                    record = records_by_key.get(record_key)
+                    record = records_by_key.get(record_key) if merge_metrics else None
                     if record is None:
                         record = {"interval": interval, **groupings}
                         records_by_key[record_key] = record
@@ -237,9 +241,13 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
         """
         return {series.metric: series.unit for series in self.data}
 
-    def to_polars(self) -> "pl.DataFrame":  # noqa: F821
+    def to_polars(self, *, merge_metrics: bool = False) -> "pl.DataFrame":  # noqa: F821
         """
         Convert time series data into a Polars DataFrame.
+
+        Args:
+            merge_metrics: One row per interval and grouping with a column per metric,
+                see :meth:`to_records`.
 
         Returns:
             A Polars DataFrame containing the time series data
@@ -251,11 +259,15 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
                 "Polars is required for DataFrame conversion. Install it with: uv add 'openelectricity[analysis]'"
             ) from None
 
-        return pl.DataFrame(self.to_records())
+        return pl.DataFrame(self.to_records(merge_metrics=merge_metrics))
 
-    def to_pandas(self) -> "pd.DataFrame":  # noqa: F821
+    def to_pandas(self, *, merge_metrics: bool = False) -> "pd.DataFrame":  # noqa: F821
         """
         Convert time series data into a Pandas DataFrame.
+
+        Args:
+            merge_metrics: One row per interval and grouping with a column per metric,
+                see :meth:`to_records`.
 
         Returns:
             A Pandas DataFrame containing the time series data
@@ -267,4 +279,4 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
                 "Pandas is required for DataFrame conversion. Install it with: uv add 'openelectricity[analysis]'"
             ) from None
 
-        return pd.DataFrame(self.to_records())
+        return pd.DataFrame(self.to_records(merge_metrics=merge_metrics))

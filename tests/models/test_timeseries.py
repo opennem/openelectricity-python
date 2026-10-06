@@ -288,9 +288,14 @@ def test_forecast_metric_and_30m_interval_registered() -> None:
 
 
 def test_facility_to_records_keeps_units_apart(facility_response: dict[str, Any]) -> None:
-    """Facility records carry unit_code so units on the same interval don't overwrite each other."""
-    records = TimeSeriesResponse.model_validate(facility_response).to_records()
+    """Facility records carry unit_code so units on the same interval stay apart."""
+    response = TimeSeriesResponse.model_validate(facility_response)
 
+    records = response.to_records()
+    assert len(records) == 12  # one row per value: 2 metrics x 2 units x 3 days
+    assert {r["unit_code"] for r in records} == {"BANGOWF1", "BANGOWF2"}
+
+    records = response.to_records(merge_metrics=True)
     assert len(records) == 6  # 2 units x 3 days, energy and market_value on the same row
     bango1 = next(r for r in records if r["unit_code"] == "BANGOWF1" and r["interval"] == datetime(2025, 2, 12, 23, 0))
     assert bango1["energy"] == 931.4554
