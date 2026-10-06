@@ -224,3 +224,12 @@ def test_readme_access_patterns(network_data_response: dict[str, Any]) -> None:
     assert by_group.loc["coal", "energy"] == 264000.0
     assert by_group.loc["solar", "power"] == 6000.0
     assert (df["interval"] == pd.Timestamp("2026-10-04 00:00:00")).all()
+
+
+def test_to_records_merges_metrics_per_interval_and_region(market_response: dict[str, Any]) -> None:
+    records = TimeSeriesResponse.model_validate(market_response).to_records()
+
+    assert len(records) == 4  # 2 regions x 2 intervals, price and demand on the same row
+    nsw = next(r for r in records if r["region"] == "NSW1" and r["interval"] == datetime(2026, 10, 5))
+    assert nsw["price"] == 144.510833
+    assert nsw["demand"] == 6685.229167

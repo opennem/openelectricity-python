@@ -158,35 +158,26 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
             return []
 
         records: list[dict[str, Any]] = []
+        records_by_key: dict[tuple[Any, ...], dict[str, Any]] = {}
 
         for series in self.data:
             # Process each result group
             for result in series.results:
                 # Get grouping information, only the column keys the API sent
-                groupings = {
-                    k: v for k, v in result.columns.model_dump(exclude_unset=True).items() if v is not None and k != "unit_code"
-                }
+                groupings = {k: v for k, v in result.columns.model_dump(exclude_unset=True).items() if v is not None}
 
                 # Process each data point
                 for point in result.data:
-                    # Create or update record
-                    record_key = (point.timestamp.isoformat(), *sorted(groupings.items()))
-                    existing_record = next(
-                        (r for r in records if (r["interval"].isoformat(), *sorted((k, r[k]) for k in groupings)) == record_key),
-                        None,
-                    )
+                    interval = self._create_network_date(point.timestamp, series.network_timezone_offset)
 
-                    if existing_record:
-                        # Update existing record with this metric
-                        existing_record[series.metric] = point.value
-                    else:
-                        # Create new record
-                        record = {
-                            "interval": self._create_network_date(point.timestamp, series.network_timezone_offset),
-                            **groupings,
-                            series.metric: point.value,
-                        }
+                    # One record per interval and grouping, with a column per metric
+                    record_key = (interval, *sorted(groupings.items()))
+                    record = records_by_key.get(record_key)
+                    if record is None:
+                        record = {"interval": interval, **groupings}
+                        records_by_key[record_key] = record
                         records.append(record)
+                    record[series.metric] = point.value
 
         return records
 

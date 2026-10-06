@@ -285,3 +285,13 @@ def test_forecast_metric_and_30m_interval_registered() -> None:
     assert MarketMetric.SOLAR_ROOFTOP_FORECAST.value == "solar_rooftop_forecast"
     assert "30m" in VALID_INTERVALS
     assert "30m" in get_args(DataInterval)
+
+
+def test_facility_to_records_keeps_units_apart(facility_response: dict[str, Any]) -> None:
+    """Facility records carry unit_code so units on the same interval don't overwrite each other."""
+    records = TimeSeriesResponse.model_validate(facility_response).to_records()
+
+    assert len(records) == 6  # 2 units x 3 days, energy and market_value on the same row
+    bango1 = next(r for r in records if r["unit_code"] == "BANGOWF1" and r["interval"] == datetime(2025, 2, 12, 23, 0))
+    assert bango1["energy"] == 931.4554
+    assert bango1["market_value"] == 80408.191
