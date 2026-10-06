@@ -267,6 +267,13 @@ def test_forecast_series_parses_30m_and_run_time() -> None:
     assert series.results[0].data[1].value is None
 
 
+def test_forecast_run_time_null_for_backfilled_history() -> None:
+    """Windows served only from backfilled history send forecast_run_time: null."""
+    series = NetworkTimeSeries.model_validate(_forecast_series(forecast_run_time=None))
+
+    assert series.forecast_run_time is None
+
+
 def test_forecast_run_time_absent_on_actual_metrics(facility_response: dict[str, Any]) -> None:
     """Non-forecast blocks omit forecast_run_time."""
     series = NetworkTimeSeries.model_validate(facility_response["data"][0])
