@@ -10,7 +10,8 @@ Rooftop solar forecast support ([opennem#675](https://github.com/opennem/opennem
 - `30m` added to `DataInterval` and `VALID_INTERVALS`, accepted on market and
   data endpoints. Responses at `30m` previously failed model validation.
 - `NetworkTimeSeries.forecast_run_time` (optional `datetime`), the issue time
-  of the newest forecast run used. Present only on forecast metric series.
+  of the newest forecast run used. Set only on forecast metric series, and
+  `None` for windows covered only by history with no recorded run time.
 - `examples/rooftop_forecast.py` splices the forecast onto rooftop actuals.
 
 Forecast metrics accept a `date_end` in the future. The client does no date
