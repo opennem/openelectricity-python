@@ -233,3 +233,50 @@ def test_to_records_merges_metrics_per_interval_and_region(market_response: dict
     nsw = next(r for r in records if r["region"] == "NSW1" and r["interval"] == datetime(2026, 10, 5))
     assert nsw["price"] == 144.510833
     assert nsw["demand"] == 6685.229167
+
+
+def test_aliases_stay_in_step_after_assignment_and_copy(market_response: dict[str, Any]) -> None:
+    series = TimeSeriesResponse.model_validate(market_response).data[0]
+    new_start = datetime(2026, 10, 4, tzinfo=AEST)
+
+    series.start = new_start
+    assert series.date_start == new_start
+    assert series.date_range[0] == new_start
+
+    copy = series.model_copy(update={"date_end": new_start})
+    with pytest.warns(DeprecationWarning):
+        assert copy.end == new_start
+
+    constructed = NetworkTimeSeries.model_construct(start=new_start)
+    assert constructed.date_start == new_start
+
+    columns = series.results[0].columns
+    columns.region = "QLD1"
+    with pytest.warns(DeprecationWarning):
+        assert columns.network_region == "QLD1"
+
+
+def test_pickle_round_trip_and_older_pickles(market_response: dict[str, Any]) -> None:
+    import pickle
+
+    series = TimeSeriesResponse.model_validate(market_response).data[0]
+    assert pickle.loads(pickle.dumps(series)) == series
+
+    # a pickle from before date_start/date_end existed restores with them filled from start/end
+    old_state = series.__getstate__()
+    old_state["__dict__"] = {k: v for k, v in old_state["__dict__"].items() if k not in ("date_start", "date_end")}
+    restored = NetworkTimeSeries.__new__(NetworkTimeSeries)
+    restored.__setstate__(old_state)
+    assert restored.date_start == series.date_start
+    assert restored.date_range == (series.date_start, series.date_end)
+
+
+def test_serialisation_keeps_old_keys(market_response: dict[str, Any]) -> None:
+    """model_dump / JSON still carry start / end / network_region, now alongside the real keys."""
+    series = TimeSeriesResponse.model_validate(market_response).data[0]
+    dumped = series.model_dump()
+
+    assert dumped["start"] == dumped["date_start"]
+    assert dumped["end"] == dumped["date_end"]
+    assert dumped["results"][0]["columns"]["network_region"] == "NSW1"
+    assert NetworkTimeSeries.model_validate_json(series.model_dump_json()) == series

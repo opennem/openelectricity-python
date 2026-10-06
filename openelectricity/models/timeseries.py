@@ -4,28 +4,68 @@ Time series models for the OpenElectricity API.
 This module contains models for time series data responses.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, RootModel, model_validator
+from typing_extensions import Self
 
 from openelectricity.models.base import APIResponse
 from openelectricity.types import DataInterval, NetworkCode
 
 
-def _mirror_aliases(model: BaseModel, pairs: tuple[tuple[str, str], ...]) -> None:
-    """Fill whichever of each (current, deprecated) field pair is empty from the other.
+class _AliasedModel(BaseModel):
+    """Keeps each (current, deprecated) field pair in ``_alias_pairs`` holding the same value.
 
-    Writes to ``__dict__`` so the copy isn't marked as set (``to_records`` only emits keys the
-    API sent) and reading the deprecated field here doesn't warn.
+    Copies go straight into ``__dict__`` so they aren't marked as set and reading the
+    deprecated field here doesn't warn.
     """
-    values = vars(model)
-    for current, deprecated in pairs:
-        if values[current] is None:
-            values[current] = values[deprecated]
-        elif values[deprecated] is None:
-            values[deprecated] = values[current]
+
+    _alias_pairs: ClassVar[tuple[tuple[str, str], ...]] = ()
+
+    def _partners(self, name: str) -> list[str]:
+        return [b if name == a else a for a, b in self._alias_pairs if name in (a, b)]
+
+    def _fill_aliases(self) -> None:
+        values = vars(self)
+        for current, deprecated in self._alias_pairs:
+            if values.get(current) is None:
+                values[current] = values.get(deprecated)
+            elif values.get(deprecated) is None:
+                values[deprecated] = values[current]
+
+    @model_validator(mode="after")
+    def _fill_aliases_after_validation(self) -> Self:
+        self._fill_aliases()
+        return self
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        super().__setattr__(name, value)
+        for partner in self._partners(name):
+            vars(self)[partner] = value
+
+    @classmethod
+    def model_construct(cls, _fields_set: set[str] | None = None, **values: Any) -> Self:
+        model = super().model_construct(_fields_set, **values)
+        model._fill_aliases()
+        return model
+
+    def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:
+        copy = super().model_copy(update=update, deep=deep)
+        for name, value in (update or {}).items():
+            for partner in self._partners(name):
+                vars(copy)[partner] = value
+        return copy
+
+    def __setstate__(self, state: dict[Any, Any]) -> None:
+        # pickles from older versions lack the newer fields
+        super().__setstate__(state)
+        values = vars(self)
+        for name, field in type(self).model_fields.items():
+            if name not in values and not field.is_required():
+                values[name] = field.get_default(call_default_factory=True)
+        self._fill_aliases()
 
 
 class TimeSeriesDataPoint(RootModel):
@@ -44,7 +84,7 @@ class TimeSeriesDataPoint(RootModel):
         return self.root[1]
 
 
-class TimeSeriesColumns(BaseModel):
+class TimeSeriesColumns(_AliasedModel):
     """Column metadata for time series results.
 
     Populated according to the groupings used in the request: ``region``
@@ -61,10 +101,17 @@ class TimeSeriesColumns(BaseModel):
     status: str | None = None
     network_region: str | None = Field(default=None, deprecated="use `region`, the key the API returns")
 
-    @model_validator(mode="after")
-    def _sync_region(self) -> "TimeSeriesColumns":
-        _mirror_aliases(self, (("region", "network_region"),))
-        return self
+    _alias_pairs: ClassVar[tuple[tuple[str, str], ...]] = (("region", "network_region"),)
+
+    def _record_columns(self) -> dict[str, Any]:
+        """Non-empty columns, minus alias copies of a key the API sent."""
+        values = {k: v for k, v in vars(self).items() if v is not None}
+        sent = self.model_fields_set
+        for current, deprecated in self._alias_pairs:
+            for name, partner in ((current, deprecated), (deprecated, current)):
+                if partner in sent and name not in sent:
+                    values.pop(name, None)
+        return values
 
 
 class TimeSeriesResult(BaseModel):
@@ -77,7 +124,7 @@ class TimeSeriesResult(BaseModel):
     data: list[TimeSeriesDataPoint]
 
 
-class NetworkTimeSeries(BaseModel):
+class NetworkTimeSeries(_AliasedModel):
     """Network time series data point."""
 
     network_code: NetworkCode
@@ -93,10 +140,7 @@ class NetworkTimeSeries(BaseModel):
     network_timezone_offset: str
     forecast_run_time: datetime | None = None  # issue time of the newest forecast run, forecast metrics only
 
-    @model_validator(mode="after")
-    def _sync_dates(self) -> "NetworkTimeSeries":
-        _mirror_aliases(self, (("date_start", "start"), ("date_end", "end")))
-        return self
+    _alias_pairs: ClassVar[tuple[tuple[str, str], ...]] = (("date_start", "start"), ("date_end", "end"))
 
     @property
     def date_range(self) -> tuple[datetime | None, datetime | None]:
@@ -163,8 +207,8 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
         for series in self.data:
             # Process each result group
             for result in series.results:
-                # Get grouping information, only the column keys the API sent
-                groupings = {k: v for k, v in result.columns.model_dump(exclude_unset=True).items() if v is not None}
+                # Get grouping information
+                groupings = result.columns._record_columns()
 
                 # Process each data point
                 for point in result.data:
