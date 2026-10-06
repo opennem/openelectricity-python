@@ -149,9 +149,13 @@ with OEClient() as client:
     print(response.data[0].forecast_run_time)
 ```
 
+### Response fields
+
+Each series in `response.data` carries `date_start` and `date_end` for its data range, and each result carries its grouping values in `result.columns` (`region`, `fueltech`, `fueltech_group`, `renewable`, `status` or `unit_code`). Timestamps are network-local with an offset (e.g. `2026-10-05T00:00:00+10:00`). `series.start` / `series.end` and `columns.network_region` are deprecated aliases of `date_start` / `date_end` and `region`; they still work and emit a `DeprecationWarning`.
+
 ## Data Analysis
 
-The client provides built-in support for converting API responses to popular data analysis formats.
+The client provides built-in support for converting API responses to popular data analysis formats. `to_records()`, `to_pandas()` and `to_polars()` return one row per interval and grouping with a column per metric. `interval` is the network-local time as a naive datetime, and grouping columns (`region`, `fueltech_group`, `unit_code`, ...) are included when present.
 
 ### Using with Polars
 

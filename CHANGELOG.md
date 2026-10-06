@@ -18,6 +18,28 @@ Rooftop solar forecast support ([opennem#675](https://github.com/opennem/opennem
 Forecast metrics accept a `date_end` in the future. The client does no date
 validation, so no client change was needed for that.
 
+### Fixed
+
+- `to_records()` / `to_pandas()` / `to_polars()` shifted every interval forward
+  by the network offset (+10h for NEM). API timestamps already carry the
+  offset (`2026-10-05T00:00:00+10:00`). `interval` is now the network-local
+  wall clock time, still a naive `datetime`.
+- `region` grouping values were dropped on parse because the API sends
+  `columns.region`. `TimeSeriesColumns` gains `region` and `status`, and
+  records include them as columns.
+- `to_records()` now puts every metric for an interval and grouping on one row,
+  as documented. It previously emitted one row per value. Facility records gain
+  a `unit_code` column so units stay apart.
+
+### Changed
+
+- `NetworkTimeSeries` reads `date_start` / `date_end`, the keys the API
+  returns. `start` / `end` are deprecated aliases holding the same values, and
+  older responses that send `start` / `end` fill `date_start` / `date_end`.
+- `TimeSeriesColumns.network_region` is a deprecated alias of `region`.
+- Reading a deprecated field emits a `DeprecationWarning`. Records only include
+  the column keys the API sent, so existing record columns are unchanged.
+
 ## 0.11.3
 
 ### Added
