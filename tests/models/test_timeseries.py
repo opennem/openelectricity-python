@@ -136,8 +136,8 @@ def test_network_timeseries_parsing(facility_response):
     assert len(energy_series.results) == 2
 
     # Check start and end dates
-    assert energy_series.start == datetime(2025, 2, 13, tzinfo=None)
-    assert energy_series.end == datetime(2025, 2, 15, tzinfo=None)
+    assert energy_series.date_start == datetime(2025, 2, 13, tzinfo=None)
+    assert energy_series.date_end == datetime(2025, 2, 15, tzinfo=None)
 
 
 def test_timeseries_result_parsing(facility_response):

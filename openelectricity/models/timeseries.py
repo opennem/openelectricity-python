@@ -5,13 +5,27 @@ This module contains models for time series data responses.
 """
 
 from collections.abc import Sequence
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, Field, RootModel, model_validator
 
 from openelectricity.models.base import APIResponse
 from openelectricity.types import DataInterval, NetworkCode
+
+
+def _mirror_aliases(model: BaseModel, pairs: tuple[tuple[str, str], ...]) -> None:
+    """Fill whichever of each (current, deprecated) field pair is empty from the other.
+
+    Writes to ``__dict__`` so the copy isn't marked as set (``to_records`` only emits keys the
+    API sent) and reading the deprecated field here doesn't warn.
+    """
+    values = model.__dict__
+    for current, deprecated in pairs:
+        if values[current] is None:
+            values[current] = values[deprecated]
+        elif values[deprecated] is None:
+            values[deprecated] = values[current]
 
 
 class TimeSeriesDataPoint(RootModel):
@@ -33,16 +47,24 @@ class TimeSeriesDataPoint(RootModel):
 class TimeSeriesColumns(BaseModel):
     """Column metadata for time series results.
 
-    Populated according to the ``secondary_grouping`` used in the request:
-    ``fueltech`` / ``fueltech_group`` / ``renewable`` / ``unit_code`` /
-    ``network_region``.
+    Populated according to the groupings used in the request: ``region``
+    (``primary_grouping="network_region"``), ``fueltech`` / ``fueltech_group`` /
+    ``renewable`` / ``status`` (``secondary_grouping``) and ``unit_code``
+    (facility data). ``network_region`` is a deprecated alias of ``region``.
     """
 
     unit_code: str | None = None
+    region: str | None = None
     fueltech: str | None = None
     fueltech_group: str | None = None
     renewable: bool | None = None
-    network_region: str | None = None
+    status: str | None = None
+    network_region: str | None = Field(default=None, deprecated="use `region`, the key the API returns")
+
+    @model_validator(mode="after")
+    def _sync_region(self) -> "TimeSeriesColumns":
+        _mirror_aliases(self, (("region", "network_region"),))
+        return self
 
 
 class TimeSeriesResult(BaseModel):
@@ -62,18 +84,25 @@ class NetworkTimeSeries(BaseModel):
     metric: str
     unit: str
     interval: DataInterval
-    start: datetime | None = None
-    end: datetime | None = None
+    date_start: datetime | None = None
+    date_end: datetime | None = None
+    start: datetime | None = Field(default=None, deprecated="use `date_start`, the key the API returns")
+    end: datetime | None = Field(default=None, deprecated="use `date_end`, the key the API returns")
     groupings: list[str] = Field(default_factory=list)
     results: list[TimeSeriesResult]
     network_timezone_offset: str
     forecast_run_time: datetime | None = None  # issue time of the newest forecast run, forecast metrics only
 
+    @model_validator(mode="after")
+    def _sync_dates(self) -> "NetworkTimeSeries":
+        _mirror_aliases(self, (("date_start", "start"), ("date_end", "end")))
+        return self
+
     @property
     def date_range(self) -> tuple[datetime | None, datetime | None]:
         """Get the date range from the results if not explicitly set."""
-        if self.start is not None and self.end is not None:
-            return self.start, self.end
+        if self.date_start is not None and self.date_end is not None:
+            return self.date_start, self.date_end
 
         # Try to get dates from results
         if not self.results:
@@ -95,14 +124,15 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
 
     def _create_network_date(self, timestamp: datetime, timezone_offset: str) -> datetime:
         """
-        Create a datetime with the correct network timezone.
+        Convert a timestamp to naive network-local time.
 
         Args:
-            timestamp: The UTC timestamp
-            timezone_offset: The timezone offset string (e.g., "+10:00")
+            timestamp: The timestamp. The API sends network-local times with an offset
+                (e.g. ``+10:00``); naive timestamps are treated as UTC.
+            timezone_offset: The network timezone offset string (e.g., "+10:00")
 
         Returns:
-            A datetime adjusted to the network timezone
+            A naive datetime holding the network-local wall clock time
         """
         if not timezone_offset:
             return timestamp
@@ -110,10 +140,12 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
         # Parse the timezone offset
         sign = 1 if timezone_offset.startswith("+") else -1
         hours, minutes = map(int, timezone_offset[1:].split(":"))
-        offset_minutes = (hours * 60 + minutes) * sign
+        network_tz = timezone(timedelta(minutes=(hours * 60 + minutes) * sign))
 
-        # Adjust the timestamp
-        return timestamp.replace(tzinfo=None) + timedelta(minutes=offset_minutes)
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+
+        return timestamp.astimezone(network_tz).replace(tzinfo=None)
 
     def to_records(self) -> list[dict[str, Any]]:
         """
@@ -130,8 +162,10 @@ class TimeSeriesResponse(APIResponse[NetworkTimeSeries]):
         for series in self.data:
             # Process each result group
             for result in series.results:
-                # Get grouping information
-                groupings = {k: v for k, v in result.columns.__dict__.items() if v is not None and k != "unit_code"}
+                # Get grouping information, only the column keys the API sent
+                groupings = {
+                    k: v for k, v in result.columns.model_dump(exclude_unset=True).items() if v is not None and k != "unit_code"
+                }
 
                 # Process each data point
                 for point in result.data:
