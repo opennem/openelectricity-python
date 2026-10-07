@@ -38,6 +38,14 @@ uv add "openelectricity[analysis]"
 pip install openelectricity
 ```
 
+## Upgrading to 0.12
+
+0.12.0 fixes the data frame output, which changes it. See the [changelog](./CHANGELOG.md#0120).
+
+- `to_records()` / `to_pandas()` / `to_polars()` report `interval` in network time. 0.11.x reported it 10 hours late for the NEM; remove any -10h compensation you added.
+- Records gain the `region`, `status` and `unit_code` grouping columns that 0.11.x dropped.
+- `to_polars()` keeps every metric. 0.11.x dropped metrics whose rows started after the first 100.
+
 ## Quick Start
 
 First, set your API key in the environment:

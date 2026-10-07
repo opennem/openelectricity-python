@@ -4,6 +4,28 @@
 
 Rooftop solar forecast support ([opennem#675](https://github.com/opennem/opennem/issues/675)).
 
+### Breaking changes
+
+- `to_records()` / `to_pandas()` / `to_polars()` no longer shift `interval` by
+  the network offset. API timestamps already carry the offset, so 0.11.x
+  reported every interval 10 hours late for the NEM (8 for the WEM). `interval`
+  is now the network-local time, still a naive `datetime`. If you subtracted
+  10 hours to compensate, remove that. For the API point
+  `["2026-10-05T00:00:00+10:00", 144.51]` in NSW1:
+
+  ```python
+  # 0.11.x
+  {"interval": datetime(2026, 10, 5, 10, 0), "price": 144.51}
+  # 0.12.0
+  {"interval": datetime(2026, 10, 5, 0, 0), "region": "NSW1", "price": 144.51}
+  ```
+
+- Records gain grouping columns that 0.11.x dropped: `region` (for
+  `primary_grouping="network_region"`), `status` (for
+  `secondary_grouping="status"`) and `unit_code` (facility data).
+- `to_polars()` now keeps every metric. 0.11.x dropped any metric whose rows
+  started after the first 100, so frames can gain columns.
+
 ### Added
 
 - `MarketMetric.SOLAR_ROOFTOP_FORECAST` (`solar_rooftop_forecast`, MW, NEM only).
@@ -16,8 +38,8 @@ Rooftop solar forecast support ([opennem#675](https://github.com/opennem/opennem
 - `examples/rooftop_forecast.py` splices the forecast onto rooftop actuals.
 - `to_records()`, `to_pandas()` and `to_polars()` take an opt-in, keyword-only
   `merge_metrics=True` that puts every metric for an interval and grouping on
-  one row, with a column per metric. The default output is unchanged, one row
-  per value.
+  one row, with a column per metric. Without it the row shape is unchanged,
+  one row per value.
 
 Forecast metrics accept a `date_end` in the future. The client does no date
 validation, so no client change was needed for that.
