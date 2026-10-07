@@ -6,6 +6,7 @@ using real API response examples.
 """
 
 from datetime import datetime, timezone
+from typing import Any, get_args
 
 import pytest
 
@@ -15,6 +16,7 @@ from openelectricity.models.timeseries import (
     TimeSeriesResponse,
     TimeSeriesResult,
 )
+from openelectricity.types import VALID_INTERVALS, DataInterval, MarketMetric
 
 
 @pytest.fixture
@@ -134,8 +136,8 @@ def test_network_timeseries_parsing(facility_response):
     assert len(energy_series.results) == 2
 
     # Check start and end dates
-    assert energy_series.start == datetime(2025, 2, 13, tzinfo=None)
-    assert energy_series.end == datetime(2025, 2, 15, tzinfo=None)
+    assert energy_series.date_start == datetime(2025, 2, 13, tzinfo=None)
+    assert energy_series.date_end == datetime(2025, 2, 15, tzinfo=None)
 
 
 def test_timeseries_result_parsing(facility_response):
@@ -228,3 +230,73 @@ def test_columns_renewable_populated_when_grouping_by_renewable() -> None:
     assert result.columns.renewable is True
     assert result.columns.fueltech is None
     assert result.columns.fueltech_group is None
+
+
+def _forecast_series(**extra: object) -> dict[str, object]:
+    return {
+        "network_code": "NEM",
+        "metric": "solar_rooftop_forecast",
+        "unit": "MW",
+        "interval": "30m",
+        "date_start": "2026-10-06T10:30:00+10:00",
+        "date_end": "2026-10-08T10:30:00+10:00",
+        "groupings": [],
+        "results": [
+            {
+                "name": "solar_rooftop_forecast_NSW1",
+                "date_start": "2026-10-06T10:30:00+10:00",
+                "date_end": "2026-10-08T10:30:00+10:00",
+                "columns": {"region": "NSW1"},
+                "data": [
+                    ["2026-10-06T10:30:00+10:00", 5120.5],
+                    ["2026-10-08T10:00:00+10:00", None],
+                ],
+            }
+        ],
+        "network_timezone_offset": "+10:00",
+        **extra,
+    }
+
+
+def test_forecast_series_parses_30m_and_run_time() -> None:
+    """solar_rooftop_forecast blocks carry the 30m interval and forecast_run_time (#675)."""
+    series = NetworkTimeSeries.model_validate(_forecast_series(forecast_run_time="2026-10-06T10:30:00+10:00"))
+
+    assert series.interval == "30m"
+    assert series.forecast_run_time == datetime(2026, 10, 6, 0, 30, tzinfo=timezone.utc)
+    assert series.results[0].data[1].value is None
+
+
+def test_forecast_run_time_null_for_backfilled_history() -> None:
+    """Windows served only from backfilled history send forecast_run_time: null."""
+    series = NetworkTimeSeries.model_validate(_forecast_series(forecast_run_time=None))
+
+    assert series.forecast_run_time is None
+
+
+def test_forecast_run_time_absent_on_actual_metrics(facility_response: dict[str, Any]) -> None:
+    """Non-forecast blocks omit forecast_run_time."""
+    series = NetworkTimeSeries.model_validate(facility_response["data"][0])
+
+    assert series.forecast_run_time is None
+
+
+def test_forecast_metric_and_30m_interval_registered() -> None:
+    assert MarketMetric.SOLAR_ROOFTOP_FORECAST.value == "solar_rooftop_forecast"
+    assert "30m" in VALID_INTERVALS
+    assert "30m" in get_args(DataInterval)
+
+
+def test_facility_to_records_keeps_units_apart(facility_response: dict[str, Any]) -> None:
+    """Facility records carry unit_code so units on the same interval stay apart."""
+    response = TimeSeriesResponse.model_validate(facility_response)
+
+    records = response.to_records()
+    assert len(records) == 12  # one row per value: 2 metrics x 2 units x 3 days
+    assert {r["unit_code"] for r in records} == {"BANGOWF1", "BANGOWF2"}
+
+    records = response.to_records(merge_metrics=True)
+    assert len(records) == 6  # 2 units x 3 days, energy and market_value on the same row
+    bango1 = next(r for r in records if r["unit_code"] == "BANGOWF1" and r["interval"] == datetime(2025, 2, 12, 23, 0))
+    assert bango1["energy"] == 931.4554
+    assert bango1["market_value"] == 80408.191

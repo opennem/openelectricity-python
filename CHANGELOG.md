@@ -1,5 +1,72 @@
 # Changelog
 
+## 0.12.0
+
+Rooftop solar forecast support ([opennem#675](https://github.com/opennem/opennem/issues/675)).
+
+### Breaking changes
+
+- `to_records()` / `to_pandas()` / `to_polars()` no longer shift `interval` by
+  the network offset. API timestamps already carry the offset, so 0.11.x
+  reported every interval 10 hours late for the NEM (8 for the WEM). `interval`
+  is now the network-local time, still a naive `datetime`. If you subtracted
+  10 hours to compensate, remove that. For the API point
+  `["2026-10-05T00:00:00+10:00", 144.51]` in NSW1:
+
+  ```python
+  # 0.11.x
+  {"interval": datetime(2026, 10, 5, 10, 0), "price": 144.51}
+  # 0.12.0
+  {"interval": datetime(2026, 10, 5, 0, 0), "region": "NSW1", "price": 144.51}
+  ```
+
+- Records gain grouping columns that 0.11.x dropped: `region` (for
+  `primary_grouping="network_region"`), `status` (for
+  `secondary_grouping="status"`) and `unit_code` (facility data).
+- `to_polars()` now keeps every metric. 0.11.x dropped any metric whose rows
+  started after the first 100, so frames can gain columns.
+
+### Added
+
+- `MarketMetric.SOLAR_ROOFTOP_FORECAST` (`solar_rooftop_forecast`, MW, NEM only).
+- `30m` added to `DataInterval` and `VALID_INTERVALS`, accepted on market and
+  data endpoints. Responses at `30m` previously failed model validation.
+- `NetworkTimeSeries.forecast_run_time` (optional `datetime`), the issue time
+  of the newest forecast run used. Set only on forecast metric series, and
+  `None` when the values come from history loaded before run times were
+  recorded (before October 2026).
+- `examples/rooftop_forecast.py` splices the forecast onto rooftop actuals.
+- `to_records()`, `to_pandas()` and `to_polars()` take an opt-in, keyword-only
+  `merge_metrics=True` that puts every metric for an interval and grouping on
+  one row, with a column per metric. Without it the row shape is unchanged,
+  one row per value.
+
+Forecast metrics accept a `date_end` in the future. The client does no date
+validation, so no client change was needed for that.
+
+### Fixed
+
+- `to_records()` / `to_pandas()` / `to_polars()` shifted every interval forward
+  by the network offset (+10h for NEM). API timestamps already carry the
+  offset (`2026-10-05T00:00:00+10:00`). `interval` is now the network-local
+  wall clock time, still a naive `datetime`.
+- `region` grouping values were dropped on parse because the API sends
+  `columns.region`. `TimeSeriesColumns` gains `region` and `status`, and
+  records include them as columns.
+- Facility records gain a `unit_code` column so units on the same interval can
+  be told apart.
+- `to_polars()` dropped any metric whose rows started after the first 100, as
+  polars only scanned those for the schema. It now scans every row.
+
+### Changed
+
+- `NetworkTimeSeries` reads `date_start` / `date_end`, the keys the API
+  returns. `start` / `end` are deprecated aliases holding the same values, and
+  older responses that send `start` / `end` fill `date_start` / `date_end`.
+- `TimeSeriesColumns.network_region` is a deprecated alias of `region`.
+- Reading a deprecated field emits a `DeprecationWarning`. Records only include
+  the column keys the API sent, so existing record columns are unchanged.
+
 ## 0.11.3
 
 ### Added

@@ -38,6 +38,14 @@ uv add "openelectricity[analysis]"
 pip install openelectricity
 ```
 
+## Upgrading to 0.12
+
+0.12.0 fixes the data frame output, which changes it. See the [changelog](./CHANGELOG.md#0120).
+
+- `to_records()` / `to_pandas()` / `to_polars()` report `interval` in network time. 0.11.x reported it 10 hours late for the NEM; remove any -10h compensation you added.
+- Records gain the `region`, `status` and `unit_code` grouping columns that 0.11.x dropped.
+- `to_polars()` keeps every metric. 0.11.x dropped metrics whose rows started after the first 100.
+
 ## Quick Start
 
 First, set your API key in the environment:
@@ -130,9 +138,36 @@ async def main():
 asyncio.run(main())
 ```
 
+### Rooftop solar forecast
+
+`MarketMetric.SOLAR_ROOFTOP_FORECAST` (MW, NEM only) accepts a `date_end` in the future, up to the latest forecast interval. Each forecast series carries `forecast_run_time`, the issue time of the newest AEMO run used. `examples/rooftop_forecast.py` splices it onto rooftop actuals; see the [forecast guide](https://docs.openelectricity.org.au/guides/forecast).
+
+```python
+from openelectricity.types import MarketMetric
+
+with OEClient() as client:
+    response = client.get_market(
+        network_code="NEM",
+        metrics=[MarketMetric.SOLAR_ROOFTOP_FORECAST],
+        interval="30m",
+        date_start=datetime(2026, 10, 6, 10, 30),
+        date_end=datetime(2026, 10, 8, 10, 30),
+        primary_grouping="network_region",
+    )
+    print(response.data[0].forecast_run_time)
+```
+
+### Response fields
+
+Each series in `response.data` carries `date_start` and `date_end` for its data range, and each result carries its grouping values in `result.columns` (`region`, `fueltech`, `fueltech_group`, `renewable`, `status` or `unit_code`). Timestamps are network-local with an offset (e.g. `2026-10-05T00:00:00+10:00`). `series.start` / `series.end` and `columns.network_region` are deprecated aliases of `date_start` / `date_end` and `region`; they still work and emit a `DeprecationWarning`.
+
 ## Data Analysis
 
-The client provides built-in support for converting API responses to popular data analysis formats.
+The client provides built-in support for converting API responses to popular data analysis formats. `to_records()`, `to_pandas()` and `to_polars()` return one row per value by default, with `interval` (network-local time as a naive datetime), the grouping columns (`region`, `fueltech_group`, `unit_code`, ...) and the value under its metric name. Pass `merge_metrics=True` for one row per interval and grouping with a column per metric:
+
+```python
+df = response.to_pandas(merge_metrics=True)  # interval, region, price, demand
+```
 
 ### Using with Polars
 
